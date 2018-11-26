@@ -2,7 +2,7 @@
 # Converts MQTT message payloads to Home Assistant events and callback functions.
 #
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v0.2.0
+# Version:          v0.2.1
 
 import homeassistant.loader as loader
 import logging
@@ -24,17 +24,31 @@ def setup(hass, config):
     #mqtt = loader.get_component('mqtt')
     mqtt = hass.components.mqtt
     topic = CONFIG.get('topic', DEFAULT_TOPIC)
-    callbackScript = CONFIG.get('callback_script', None)
+    globalCallbackScript = CONFIG.get('callback_script', None)
 
     def setState(device, payload, init=False):
         if init:
             time = "Never"
         else:
             time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z") # 2018-11-26T10:50:27.636933+00:00
+
         state = {
             'last_triggered': time, 
             'payload': payload
         };
+
+        if 'type' in device:
+            state['type'] = device['type'];
+
+        if 'callback_script' in device:
+            state['callback_script'] = device['callback_script'];
+
+        if 'callback' in device:
+            state['callback'] = device['callback'];
+
+        if globalCallbackScript is not None and 'callback' in v and v['callback']:
+            state['global_callback'] = globalCallbackScript;
+
         entity = "{}.{}".format(DOMAIN, device['name'].replace('-','_'));
         hass.states.set(entity, state);
 
@@ -79,23 +93,27 @@ def setup(hass, config):
                 'state': 'on'
             })
 
-        if 'type' in v and v['type'] == 'button':
-            log_data = {'name': v['name'],        
-            'message': 'was pressed'};
-            hass.services.call('logbook', 'log',log_data);
+        log_data = {
+            'name': v['name'],        
+            'message': 'was triggered'
+        };
+        if 'type' in v:
+            if v['type'] == 'button':
+                log_data['message'] = 'was pressed';
 
-        if 'type' in v and v['type'] == 'motion':
-            log_data = {'name': v['name'],        
-            'message': 'was activated'};
-            hass.services.call('logbook', 'log', log_data);
+            if v['type'] == 'motion':
+                log_data['message'] = 'was activated';
 
-        if callbackScript is not None and 'callback' in v and v['callback']:
-            device, globalScript = self.split_entity(v['callback']);
-            hass.services.call('script', globalScript);
+        hass.services.call('logbook', 'log', log_data);
+        
+        if globalCallbackScript is not None and 'callback' in v and v['callback']:
+            _LOGGER.info("Running global callback script: " + globalCallbackScript);
+            hass.services.call('script', 'turn_on', {'entity_id': globalCallbackScript});
         
         if 'callback_script' in v:
-            device, script = self.split_entity(v['callback_script']);
-            hass.services.call('script', script);
+            device, script = v['callback_script'].split('.');
+            _LOGGER.info("Running device callback script: " + script);
+            hass.services.call('script', 'turn_on', {'entity_id': v['callback_script']});
 
         setState(v, payload)
 
