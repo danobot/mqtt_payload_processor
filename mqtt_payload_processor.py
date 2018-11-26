@@ -1,19 +1,20 @@
+# MQTT Payload Processor for Home Assistant
+# Converts MQTT message payloads to Home Assistant events and callback functions.
+#
+# Documentation:    https://github.com/danobot/mqtt_payload_processor
+# Version:          v0.2.0
+
 import homeassistant.loader as loader
 import logging
-import time
-# The domain of your component. Should be equal to the name of your component.
-DOMAIN = 'rf_processor'
+import datetime
 
-# List of component names (string) your component depends upon.
+DOMAIN = 'mqtt_payload_processor'
+
 DEPENDENCIES = ['mqtt']
-
 
 CONF_TOPIC = 'topic'
 DEFAULT_TOPIC = '/rf/'
-DEFAULT_TIMEOUT = 5
-# event:    Global overwrite, generates events based on rf code name when set to true
-# reset:    Sends off event after some timeout
-# timeout:  overwrite default timeout
+
 def setup(hass, config):
     CONFIG = config[DOMAIN]
     _LOGGER = logging.getLogger(__name__)
@@ -23,23 +24,27 @@ def setup(hass, config):
     #mqtt = loader.get_component('mqtt')
     mqtt = hass.components.mqtt
     topic = CONFIG.get('topic', DEFAULT_TOPIC)
-    entity_id = 'rf_processor.last_message'
-    #hass.states.set('rf_processor.config', CONFIG)
-    # Listener to be called when we receive a message.
+    callbackScript = CONFIG.get('callback_script', None)
 
-    # for v in CONFIG['entities']:
-    #     c = str(v['name']).replace('-','_');
-    #     domain = ''
-    #     state = {};
-    #     if 'type' in v and v['type'] == 'button':
-    #         domain = 'mqtt_button';
-    #         state = {'name': v['name']}
-    #         state['last_trigger'] = 'never';
-    #     hass.states.set(domain + '.' + c, state)
+    def setState(device, payload, init=False):
+        if init:
+            time = "Never"
+        else:
+            time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z") # 2018-11-26T10:50:27.636933+00:00
+        state = {
+            'last_triggered': time, 
+            'payload': payload
+        };
+        entity = "{}.{}".format(DOMAIN, device['name'].replace('-','_'));
+        hass.states.set(entity, state);
+
+    for v in CONFIG['entities']:
+        setState(v, "None", True);
+
+
 
     def message_received(topic, payload, qos):
         """Handle new MQTT messages."""
-        #hass.states.set(entity_id, topic+" " + payload)
         #hass.states.set('rf_processor.last_payload_received', payload)
 
 
@@ -47,60 +52,54 @@ def setup(hass, config):
 
         for v in CONFIG['entities']:
 
-            if int(v['payload']) == int(payload):
-                hass.states.set('rf_processor.last_triggered_by', v['name'])
-                # hass.states.set('rf_processor.last_triggered_time', time.localtime(time.time()))
-                if CONFIG['event']:
-                    hass.bus.fire(v['name']+'-on', {
-                        'state': 'on'
-                    })
-                    hass.bus.fire(v['name'], {
-                        'state': 'on'
-                    })
-                if 'type' in v and v['type'] == 'button':
-                    log_data = {'name': v['name'], 
-                    
-                    'message': 'was pressed'};
-                    hass.services.call('logbook', 'log',log_data);
-                if 'beep' in v and v['beep']:
-                        hass.services.call('script', 'buzz_short')
-                        
-                
-                # entity = DOMAIN + '.'+str(v['name'])
-                # _LOGGER.info(entity)
-                # hass.states.set(entity, 'on')
-                # 
-                # hass.states.set(str(DOMAIN + '.'+v['name']), 'off')
-                if CONFIG['event'] or v['event']:
-                    hass.bus.fire(v['name']+'-off', {
-                    'state': 'off'
-                    })
+            # single payload defined
+            if 'payload' in v:
+                if int(v['payload']) == int(payload): 
+                    handleRFCode(v, payload);
+                    break;
 
-                    hass.bus.fire('button', {
-                        'name': v['name']
-                    })
-
-                # This is implementation specific. RF codes that require a reset command are handled here.
-                # The MQTT message resets motion sensors to OFF.
-                # This avoids having to define automations for each motion sensor.
-
-                # if 'reset' in v and v['reset']:
-                #         time.sleep(DEFAULT_TIMEOUT)
-                #         payload = {
-                #             "topic": "/rf/all",
-                #             "payload": 0
-                #         } 
-                #         hass.services.call('mqtt', 'publish', payload,False)
-                break
-            #else:
-             #   _LOGGER.debug('no match')
+            #  # multiple payloads defined
+            if 'payloads' in v:
+                for p in v['payloads']:
+                    _LOGGER.info(p);
+                    if int(p) == int(payload):
+                        handleRFCode(v, payload);
+                        break;
 
 
     # Subscribe our listener to a topic.
     mqtt.subscribe(topic, message_received)
 
-    # Set the initial state.
-    hass.states.set(entity_id, 'No messages')
+    def handleRFCode(v, payload):
+        hass.states.set(DOMAIN + '.last_triggered_by', v['name'])
+        _LOGGER.info(v['name'])
+        # hass.states.set('rf_processor.last_triggered_time', time.localtime(time.time()))
+        if CONFIG['event']:
+            hass.bus.fire(v['name'], {
+                'state': 'on'
+            })
+
+        if 'type' in v and v['type'] == 'button':
+            log_data = {'name': v['name'],        
+            'message': 'was pressed'};
+            hass.services.call('logbook', 'log',log_data);
+
+        if 'type' in v and v['type'] == 'motion':
+            log_data = {'name': v['name'],        
+            'message': 'was activated'};
+            hass.services.call('logbook', 'log', log_data);
+
+        if callbackScript is not None and 'callback' in v and v['callback']:
+            device, globalScript = self.split_entity(v['callback']);
+            hass.services.call('script', globalScript);
+        
+        if 'callback_script' in v:
+            device, script = self.split_entity(v['callback_script']);
+            hass.services.call('script', script);
+
+        setState(v, payload)
+
+
 
     # Service to publish a message on MQTT.
     def set_state_service(call):
