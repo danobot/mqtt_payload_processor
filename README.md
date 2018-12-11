@@ -104,3 +104,16 @@ The component creates entities for each device defined in the configuration. An 
 
 # Future Enhancements
 * Group multiple devices into larger entities representing the physical device.
+
+# Automatic updates
+Use the `custom_updater` component to track updates.
+```yaml
+custom_updater:
+  track:
+    - components
+  component_urls:
+    - https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/tracker.json
+```
+
+# Changelog
+Refer to the `Changelog` file for detailed information.
