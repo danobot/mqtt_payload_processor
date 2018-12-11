@@ -2,12 +2,13 @@
 # Converts MQTT message payloads to Home Assistant events and callback functions.
 #
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v0.2.1
+# Version:          v0.2.2
 
 import homeassistant.loader as loader
 import logging
 import datetime
 
+VERSION = '0.2.2'
 DOMAIN = 'mqtt_payload_processor'
 
 DEPENDENCIES = ['mqtt']

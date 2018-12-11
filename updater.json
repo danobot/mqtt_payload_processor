@@ -1,0 +1,9 @@
+{
+    "mqtt_payload_procsesor": {
+      "version": "0.3.0",
+      "local_location": "custom_components/mqtt_payload_processor.py",
+      "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/mqtt_payload_processor.py",
+      "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
+      "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
+    }
+}
