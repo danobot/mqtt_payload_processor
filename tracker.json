@@ -1,13 +1,13 @@
 {
     "processor_component": {
-      "version": "0.3.0",
+      "version": "0.3.1",
       "local_location": "custom_components/processor/__init__.py",
       "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/__init__.py",
       "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
       "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
     },
     "mqtt_code_platform": {
-      "version": "0.3.0",
+      "version": "0.3.1",
       "local_location": "custom_components/processor/mqtt_code.py",
       "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/mqtt_code.py",
       "visit_repo": "https://github.com/danobot/mqtt_payload_processor",

@@ -5,7 +5,7 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v0.3.0
+# Version:          v0.3.1
 
 import homeassistant.loader as loader
 import logging
@@ -13,7 +13,7 @@ import datetime
 from homeassistant.helpers.entity import Entity
 from custom_components.processor import ProcessorDevice
 
-VERSION = '0.3.0'
+VERSION = '0.3.1'
 
 DEPENDENCIES = ['mqtt']
 
@@ -60,14 +60,14 @@ class MqttPayloadProcessor(ProcessorDevice):
         self.name = config.get('name', "Unnamed")
         self._unique_id = self.name
         self.log = logging.getLogger(__name__ + '.' + self.name)
-        self.log.info("Init Config: "  +str(config))
-        self.log.info("Payloads: "  +str(self.payloads_on))
+        self.log.debug("Init Config: "  +str(config))
+        self.log.debug("Payloads: "  +str(self.payloads_on))
         if config.get('payload'):
             self.payloads_on.append(config.get('payload'))
         if config.get('payloads'):
             self.payloads_on.extend(config.get('payloads'))
 
-        self.log.info(self.payloads_on)
+        self.log.debug(self.payloads_on)
         self.type = config.get('type', None)
         self.log_events = config.get('log', False)
         self.event = config.get('event', False)
@@ -85,14 +85,14 @@ class MqttPayloadProcessor(ProcessorDevice):
         """Handle new MQTT messages."""
         #hass.states.set('rf_processor.last_payload_received', payload)
 
-        self.log.info("Message received: " + str(payload))
+        self.log.debug("Message received: " + str(payload))
         # find name of button from config
 
         self.process(payload)
 
     def process(self, payload):
         
-        self.log.info("Called process on {}".format(self.name))
+        self.log.debug("Called process on {}".format(self.name))
         # # single payload defined
         # if 'payload' in v:
         #     if int(v['payload']) == int(payload): 
@@ -115,7 +115,7 @@ class MqttPayloadProcessor(ProcessorDevice):
 
     def handleRFCode(self):
         # self.hass.states.set(DOMAIN + '.last_triggered_by', self.name)
-        self.log.info(self.name)
+        self.log.debug(self.name)
         # hass.states.set('rf_processor.last_triggered_time', time.localtime(time.time()))
         if self.event:
             self.hass.bus.fire(self.name, {
