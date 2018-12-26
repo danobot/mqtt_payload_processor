@@ -2,3 +2,5 @@ v0.1.0      First Formal Release
 v0.2.0      Added callback scripts, state entities, support for multiple payloads per device
 v0.2.1      Fix callback script bugs, enhance state representation
 v0.2.2      Add updater support
+v0.3.0      Converted to component/platform
+v0.3.1      Reduce logging to DEBUG and update Readme
