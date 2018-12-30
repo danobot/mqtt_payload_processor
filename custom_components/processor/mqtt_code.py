@@ -5,20 +5,23 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v0.3.1
+# Version:          v0.3.2
 
 import homeassistant.loader as loader
 import logging
 import datetime
 from homeassistant.helpers.entity import Entity
 from custom_components.processor import ProcessorDevice
+from homeassistant.util import dt
 
-VERSION = '0.3.1'
+VERSION = '0.3.2'
 
 DEPENDENCIES = ['mqtt']
 
 CONF_TOPIC = 'topic'
 DEFAULT_TOPIC = '/rf/'
+ACTION_ON = 'on'
+ACTION_OFF = 'off'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +36,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     for v in config['entities']:
         _LOGGER.info("Entity: " + str(v))
         v['globalCallbackScript'] = config.get('callback_script', None)
+        v['globalEvent'] = config.get('event')
         m = None
         m = MqttPayloadProcessor(v)
 
@@ -50,43 +54,63 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class MqttPayloadProcessor(ProcessorDevice):
 
     type = None
-    payloads_on = []
     name = None
     last_payload = None
+    last_triggered = 'never'
+    last_action = 'none'
     def __init__(self, config):
         ProcessorDevice.__init__(self,config)
         self.payloads_on = []
+        self.payloads_off = []
     
         self.name = config.get('name', "Unnamed")
+
         self._unique_id = self.name
         self.log = logging.getLogger(__name__ + '.' + self.name)
         self.log.debug("Init Config: "  +str(config))
         self.log.debug("Payloads: "  +str(self.payloads_on))
-        if config.get('payload'):
+        if 'payload' in config:
             self.payloads_on.append(config.get('payload'))
-        if config.get('payloads'):
+        if 'payloads' in config:
             self.payloads_on.extend(config.get('payloads'))
+        if 'payloads_on' in config:
+            self.payloads_on.extend(config.get('payloads_on'))
 
-        self.log.debug(self.payloads_on)
+        if 'payload_off' in config:
+            self.payloads_off.append(config.get('payload_off'))
+        if 'payloads_off' in config:
+            self.payloads_off.extend(config.get('payloads_off'))
+
+        self.log.debug("Payloads ON: " + str(self.payloads_on))
+        self.log.debug("Payloads OFF: " + str(self.payloads_off))
         self.type = config.get('type', None)
         self.log_events = config.get('log', False)
         self.event = config.get('event', False)
         self.callback = config.get('callback', False)
         self.callback_script = config.get('callback_script', False)
         self.globalCallbackScript = config.get('globalCallbackScript', False)
-        # _LOGGER.info(str(dir(self)))
-        # _LOGGER.info(str(dir(self.hass)))
+        self.globalEvent = config.get('globalEvent', False)
         
     @property
     def device_state_attributes(self):
-        return {'payloads_on': self.payloads_on}
+        return {
+            'last_triggered': self.last_triggered,
+            'last_payload': self.last_payload,
+            'last_action': self.last_action,
+            'payloads_on': self.payloads_on,
+            'payloads_off': self.payloads_off,
+            'callback': self.callback,
+            'callback_script': self.callback_script,
+            'global_callback_script': self.globalCallbackScript,
+            'event': self.event,
+            'global_event': self.globalEvent,
+            'type': self.type
+        }
 
     def message_received(self, topic, payload, qos):
         """Handle new MQTT messages."""
-        #hass.states.set('rf_processor.last_payload_received', payload)
 
         self.log.debug("Message received: " + str(payload))
-        # find name of button from config
 
         self.process(payload)
 
@@ -94,32 +118,37 @@ class MqttPayloadProcessor(ProcessorDevice):
         
         self.log.debug("Called process on {}".format(self.name))
         # # single payload defined
-        # if 'payload' in v:
-        #     if int(v['payload']) == int(payload): 
-        #         handleRFCode(v, payload);
-        #         break;
 
-        #  # multiple payloads defined
         self.log.debug("Is {} a match in {}?".format(payload, str(self.payloads_on)))
         for p in self.payloads_on:
             if int(p) == int(payload):
-                self.log.debug("Processing {} code".format(p))
-                self.handleRFCode()
-                # self.setState(payload)
-                self.last_payload = payload
-                self.async_schedule_update_ha_state(True)
-
+                self.log.debug("Processing {} on code".format(p))
+                self.handleRFCode(ACTION_ON)
+                self.update_state(payload, ACTION_ON)
                 break
 
+        for p in self.payloads_off:
+            if int(p) == int(payload):
+                self.log.debug("Processing {} off code".format(p))
+                self.handleRFCode(ACTION_OFF)
+                self.update_state(payload, ACTION_OFF)
+                break
 
+    def update_state(self, payload, action):
+        self.last_payload = payload
+        self.last_action = action
+        self.last_triggered = dt.now()
+        self.async_schedule_update_ha_state(True)
 
-    def handleRFCode(self):
+    def handleRFCode(self, action):
         # self.hass.states.set(DOMAIN + '.last_triggered_by', self.name)
         self.log.debug(self.name)
         # hass.states.set('rf_processor.last_triggered_time', time.localtime(time.time()))
-        if self.event:
+        self.log.debug("event: " + str(self.event))
+        self.log.debug("globalEvent: " + str(self.globalEvent))
+        if self.event or self.globalEvent:
             self.hass.bus.fire(self.name, {
-                'state': 'on'
+                'state': action
             })  
 
         if self.log_events:
@@ -171,6 +200,8 @@ class MqttPayloadProcessor(ProcessorDevice):
 
         if self.globalCallbackScript is not None:
             state['global_callback'] = self.globalCallbackScript
+        if self.globalEvent:
+            state['globalEvent'] = True
 
         return state
 

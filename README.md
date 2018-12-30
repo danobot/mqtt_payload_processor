@@ -26,8 +26,8 @@ Add the following to your configuration:
 processor:
   - platform: mqtt_code
     topic: /rf/all
-    callback_script: script.buzz_short
-    event: True
+    callback_script: script.buzz_short      # Global Callback (Executed disabled downstream)
+    event: True                             # Global event flag, overwrites local (send HA events)
     entities: 
       - name: wallpanel-button-1
         type: button
@@ -35,9 +35,12 @@ processor:
         callback_script: script.buzz_long
       - name: wallpanel-button-2
         type: button
-        payloads:
-          - 5842322
-          - 5842323
+        payloads_on: 
+          - 5842324
+          - 5842325
+        payloads_off: 
+          - 5842333
+          - 5842334
         callback: False                     # Do not call global callback, True is default
 
 ```
