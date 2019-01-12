@@ -67,16 +67,20 @@ class Device(ProcessorDevice):
 
         self._name = args.get('name', 'Unnamed Device')
         self._type = args.get('type', 'panel')
+        self.may_update = False
+        self._state = 'setting up'
         self._mapping_callbacks = []
-
+        self.attributes = {}
         self._mappings = []
         for key, item in args.get('mappings').items(): # for each mapping
             item['globalCallbackScript'] = args.get('globalCallbackScript', None)
             item['globalEvent'] = args.get('globalEvent')
+
             m = MqttButton(key, item, self)
             self._mappings.append(m)
             mqtt.subscribe(hass, topic, m.message_received)
-
+            # self.update(**{key:m.last_triggered})
+            
 
         self._schedules = {}
         try:
@@ -90,6 +94,10 @@ class Device(ProcessorDevice):
             self.log.debug("No schedules defined.")
         else:
             self.log.debug("Some schedules defined.")
+        
+    @property
+    def state(self):
+        return self._state
     @property
     def name(self):
         """Return the state of the entity."""
@@ -116,7 +124,64 @@ class Device(ProcessorDevice):
         if len(active) == 0:
             active.append(DEFAULT_ACTION)
         return active
-    
+    @property
+    def state_attributes(self):
+        """Return the state of the entity."""
+        return self.attributes.copy()
+    def update(self, wait=False, **kwargs):
+        """ Called from different methods to report a state attribute change """
+        self.log.debug("Update called with {}".format(str(kwargs)))
+        for k,v in kwargs.items():
+            if v is not None:
+                self.set_attr(k,v)
+        
+        if wait == False:
+            self.do_update()
+    def reset_state(self):
+        """ Reset state attributes by removing any state specific attributes when returning to idle state """
+        self.model.log.debug("Resetting state")
+        att = {}
+
+        PERSISTED_STATE_ATTRIBUTES = [
+            'last_triggered_by',
+            'last_triggered_at',
+            'state_entities',
+            'control_entities',
+            'sensor_entities',
+            'override_entities',
+            'delay',
+            'sensor_type',
+            'mode'
+        ]
+        for k,v in self.attributes.items():
+            if k in PERSISTED_STATE_ATTRIBUTES:
+                att[k] = v
+
+        self.attributes = att
+        self.do_update()
+
+    def do_update(self, wait=False,**kwargs):
+        """ Schedules an entity state update with HASS """
+        # _LOGGER.debug("Scheduled update with HASS")
+        if self.may_update:
+            self.async_schedule_update_ha_state(True)
+
+    def set_attr(self, k, v):
+        # _LOGGER.debug("Setting state attribute {} to {}".format(k, v))
+        if k == 'delay':
+            v = str(v) + 's'
+        self.attributes[k] = v
+        # self.do_update()
+        # _LOGGER.debug("State attributes: " + str(self.attributes))
+    # HA Callbacks
+    async def async_added_to_hass(self):
+        """Register update dispatcher."""
+        self.may_update = True
+        self._state = "ready"
+        self.do_update()
+
+
+
 class Action:
     """ What needs to happen for a given schedule. """
     def __init__(self, mapping, name, args):
@@ -224,6 +289,7 @@ class TimeSchedule(Schedule):
 
 class Mapping:
     def __init__(self, name, config, device):
+        self.name = name
         self.device = device
         self.log = logging.getLogger("{}.mappings.{}".format(device.log.name, name))
         self._schedule_actions = {}
@@ -251,19 +317,16 @@ class MqttButton(Mapping):
     """ Represents a single button """
 
     type = None
-    name = None
-    last_payload = None
-    last_triggered = 'never'
-    last_action = 'none'
+
     def __init__(self, name, config, device):
         super(MqttButton, self).__init__(name, config, device)
-
+        self.last_payload = None
+        self.last_triggered = 'never'
+        self.last_action = 'none'
         self.payloads_on = []
         self.payloads_off = []
     
-        self.name = config.get('name', name)
-
-        self._unique_id = self.name
+        self.name = name
         # self.log = logging.getLogger(__name__ + '.' + self.name)
         self.log.debug("Init Config: "  +str(config))
         self.log.debug("Payloads: "  +str(self.payloads_on))
@@ -290,7 +353,7 @@ class MqttButton(Mapping):
         self.globalEvent = config.get('globalEvent', False)
         
         self._always_active = False
-        
+        self.device.update(**{self.name:self.last_triggered})
 
 
 
@@ -341,6 +404,8 @@ class MqttButton(Mapping):
         self.last_payload = payload
         self.last_action = action
         self.last_triggered = dt.now()
+        self.log.debug("name is " + self.name)
+        self.device.update(**{self.name:self.last_triggered})
         # self.async_schedule_update_ha_state(True)
 
 
