@@ -7,7 +7,7 @@
       "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
     },
     "mqtt_code_platform": {
-      "version": "0.3.2",
+      "version": "1.0.0",
       "local_location": "custom_components/processor/mqtt_code.py",
       "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/mqtt_code.py",
       "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
