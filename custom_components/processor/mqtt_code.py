@@ -77,9 +77,12 @@ class Device(ProcessorDevice):
 
 
         self._schedules = {}
-        for key, item in args.get('schedules').items(): 
-            self._schedules[key] = TimeSchedule(key, item, self)
-            # self._schedules[key] = ScheduleFactory.create(self, key, item, self)
+        try:
+            for key, item in args.get('schedules').items(): 
+                self._schedules[key] = TimeSchedule(key, item, self)
+                # self._schedules[key] = ScheduleFactory.create(self, key, item, self)
+        except AttributeError as a:
+            self.log.debug("No schedules were defined.")
 
         if len(self._schedules) == 0:
             self.log.debug("No schedules defined.")
