@@ -5,7 +5,7 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v1.0.0
+# Version:          v1.0.1
 
 import homeassistant.loader as loader
 import logging
@@ -20,7 +20,7 @@ from homeassistant.loader import bind_hass
 import homeassistant.helpers.script as script 
 # from datetimerange import DateTimeRange
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 DEPENDENCIES = ['mqtt']
 # REQUIREMENTS = ['datetimerange']
@@ -225,13 +225,11 @@ class Mapping:
         self.device = device
         self.log = logging.getLogger("{}.mappings.{}".format(device.log.name, name))
         self._schedule_actions = {}
-        for key, item in config.get('actions').items(): 
-            self._schedule_actions[key] = Action(self, key, item)
-
-        if len(self._schedule_actions) == 0:
+        try:
+            for key, item in config.get('actions').items(): 
+                self._schedule_actions[key] = Action(self, key, item)
+        except AttributeError as a:
             self.log.debug("No schedule actions defined.")
-        else:
-            self.log.debug("Many actions defined.")
 
     def run_actions(self, schedule_names):
         self.log.debug(schedule_names)
