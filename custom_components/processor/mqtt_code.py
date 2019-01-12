@@ -17,7 +17,7 @@ from homeassistant.util import dt
 from homeassistant.core import HomeAssistant as hass
 from homeassistant.components.script import ScriptEntity
 from homeassistant.loader import bind_hass
-from homeassistant.helpers.entity import ToggleEntity
+import homeassistant.helpers.script as script 
 # from datetimerange import DateTimeRange
 
 VERSION = '1.0.0'
@@ -29,7 +29,7 @@ DEFAULT_TOPIC = '/rf/'
 ACTION_ON = 'on'
 ACTION_OFF = 'off'
 TYPE_WALLPANEL = 'panel'
-
+DEFAULT_ACTION = 'default'
 _LOGGER = logging.getLogger(__name__)
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -107,46 +107,49 @@ class Device(ProcessorDevice):
             self.log.debug("Checking if {} is active".format(name))
             if schedule.is_active():
                 active.append(schedule.name)
+        
+        if len(active) == 0:
+            active.append(DEFAULT_ACTION)
         return active
     
-class Action(ScriptEntity):
+class Action:
     """ What needs to happen for a given schedule. """
     def __init__(self, mapping, name, args):
-        super(Action,self).__init__(hass,'processor-action' + name,name,args)
+        self.mapping = mapping
+        # super(Action,self).__init__(self.hass,'processor-action' + name,name,args)
         self.log = logging.getLogger("{}.actions.{}".format(mapping.log.name, name))
         self.log.info("Creating action " + name)
         if 'name' is None:
             self.log.error("Missing name in Action")
         self.schedule_name = name
         self.log.debug("Script Sequence: " + str(args))
-        component = loader.get_component('script')
+        # component = loader.get_component('script')
 
-        async def service_handler(service):
-            """Execute a service call to script.<script name>."""
-            entity_id = ENTITY_ID_FORMAT.format(service.service)
-            script = component.get_entity(entity_id)
-            if script.is_on:
-                _LOGGER.warning("Script %s already running.", entity_id)
-                return
-            await script.async_turn_on(variables=service.data,
-                                    context=service.context)
+        # async def service_handler(service):
+        #     """Execute a service call to script.<script name>."""
+        #     entity_id = ENTITY_ID_FORMAT.format(service.service)
+        #     script = component.get_entity(entity_id)
+        #     if script.is_on:
+        #         _LOGGER.warning("Script %s already running.", entity_id)
+        #         return
+        #     await script.async_turn_on(variables=service.data,
+        #                             context=service.context)
 
-        object_id = 'processor-action' + name
-        alias = name
-        self.script = ScriptEntity(hass, object_id, alias, args)
-        hass.services.async_register(
-            'script', object_id, service_handler, schema=vol.Schema(dict))
-
-        await component.async_add_entities([self.script])
-        # how to store action list as script and trigger it?
+        # object_id = 'processor-action' + name
+        # alias = name
+        # self.script = ScriptEntity(hass, object_id, alias, args)
+        # hass.services.async_register(
+        #     'script', object_id, service_handler, schema=vol.Schema(dict))
+        self._script_config = args
+#         await component.async_add_entities([self.script])
+        
         
         # self.script = Script(hass, args, name, self.async_update_ha_state)
 
     def execute(self, schedule):
         if self.schedule_name == schedule:
             self.log.debug("Executing actions in Action {}".format(self.schedule_name)) 
-            self.script.async_run(
-                None, None)
+            script.call_from_config(self.mapping.device.hass, self._script_config)
 
             
 
@@ -192,16 +195,23 @@ class TimeSchedule(Schedule):
             self.log.error("TimeSchedule requires a start and end time.")
 
     def is_active(self):
-        return self.now_is_between(self._start_time, self._end_time)
+        e = self.now_is_between(self._start_time, self._end_time)
+        self.log.debug("Is now between {} and {}? {}".format(self._start_time, self._end_time,e))
+        return e
 
 
 
-    def now_is_between(self, start, end, x=datetime.time(datetime.now())):
+    def now_is_between(self, start, end, x=None):
+        if x is None:
+            x = datetime.time(datetime.now())
+
         today = date.today()
+        self.log.debug("Current time" + str(x))
         start = datetime.combine(today, start)
         end = datetime.combine(today, end)
         x = datetime.combine(today, x)
         if end <= start:
+            self.log.debug("Bumping now_is_between input start time to tomorrow")
             end += timedelta(1) # tomorrow!
         if x <= start:
             x += timedelta(1) # tomorrow!
@@ -227,10 +237,11 @@ class Mapping:
             if s in self._schedule_actions.keys():
                 for name, action in self._schedule_actions.items():
                     action.execute(s) # method will only run actions if schedule names match
-            else:
-                self.log.error("Schedule name {} is not defined.".format(s.name))
-                if 'default' in self._schedule_actions:
-                    self.log.debug("Executing default action instead")
+        # If no actions match at the current time:
+        # self.log.error("Schedule name {} is not defined.".format(s.name))
+        # if 'default' in self._schedule_actions:
+        #     self.log.debug("Executing default action instead")
+        #     self._schedule_actions['default'].execute(s)
 
 
 class MqttButton(Mapping):
