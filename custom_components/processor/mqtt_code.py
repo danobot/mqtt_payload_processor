@@ -71,6 +71,8 @@ class Device(ProcessorDevice):
 
         self._mappings = []
         for key, item in args.get('mappings').items(): # for each mapping
+            item['globalCallbackScript'] = args.get('globalCallbackScript', None)
+            item['globalEvent'] = args.get('globalEvent')
             m = MqttButton(key, item, self)
             self._mappings.append(m)
             mqtt.subscribe(hass, topic, m.message_received)
@@ -320,7 +322,7 @@ class MqttButton(Mapping):
         # self.log.debug("Called process on {}".format(self.name))
         # # single payload defined
 
-        self.log.debug("Is {} a match in {}?".format(payload, str(self.payloads_on)))
+        # self.log.debug("Is {} a match in {}?".format(payload, str(self.payloads_on)))
         for p in self.payloads_on:
             if int(p) == int(payload):
                 self.log.debug("Processing {} on code".format(p))
@@ -350,7 +352,8 @@ class MqttButton(Mapping):
         self.log.debug("globalEvent: " + str(self.globalEvent))
         self.device.handle_event(self)
         if self.event or self.globalEvent:
-            self.hass.bus.fire(self.name, {
+            self.log.debug("Sending event.")
+            self.device.hass.bus.fire(self.name, {
                 'state': action
             })  
 
@@ -365,16 +368,16 @@ class MqttButton(Mapping):
             if self.type == 'motion':
                 log_data['message'] = 'was activated'
 
-            self.hass.services.call('logbook', 'log', log_data)
+            self.device.hass.services.call('logbook', 'log', log_data)
         
         if self.globalCallbackScript is not None and self.callback:
             self.log.info("Running global callback script: " + self.globalCallbackScript)
-            self.hass.services.call('script', 'turn_on', {'entity_id': self.globalCallbackScript})
+            self.device.hass.services.call('script', 'turn_on', {'entity_id': self.globalCallbackScript})
         
         if self.callback_script:
             device, script = self.callback_script.split('.')
             self.log.info("Running device callback script: " + script)
-            self.hass.services.call('script', 'turn_on', {'entity_id': self.callback_script})
+            self.device.hass.services.call('script', 'turn_on', {'entity_id': self.callback_script})
 
     @property
     def state(self):
