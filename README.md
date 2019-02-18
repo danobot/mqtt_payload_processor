@@ -1,8 +1,8 @@
 # Introduction
-Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Provides a neat way to decouple implementation specific payloads (such as RF codes) from your Home Assistant configuration.
+Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Provides a neat way to decouple implementation specific payloads (such as RF codes) from your Home Assistant configuration. Define schedule specific actions to execute when a device button is triggered.
 
 ## How does it work?
-You need have some kind of device that emits specific payloads on an MQTT topic that you want to convert to Home Assistant events. My use case is integration with OpenMQTTGateway where RF payloads are sent on a specific MQTT topic.
+You need have some kind of device that emits __specific payloads__ on an MQTT topic that you want to convert to Home Assistant events. My use case is integration with OpenMQTTGateway where RF payloads are sent on a specific MQTT topic.
 
 For example, an RF motion sensor, door sensor and wall button panel may send the following messages on `/rf/all`:
 
@@ -12,7 +12,7 @@ For example, an RF motion sensor, door sensor and wall button panel may send the
 /rf/all 136566
 ```
 
-Each payload is unique to a device.
+Each payload is unique to a device. Some devices have multiple payloads.
 
 This component allows you to name and define these devices (including their respective RF codes) in one central location. The rest of your Home Assistant configuration then refers to events and callback scripts instead. (This way your RF codes are not duplicated and used throughout the configuration.)
 
@@ -68,6 +68,10 @@ Where the file has the following contents:
   payload: 5842322
 ```
 # Configuration
+**Device:** A high level device containing many entities. E.g. Wall panel with multiple buttons.
+**Mapping** A button on a wall panel triggered by an MQTT payload. Contains many actions that define scripts for one or more schedules (including the `default` schedule).
+**Schedule:** Defines when a certain set of actions is executed.
+
 
 ## Callback Scripts
 You can define a script to be called as a sort of callback function. I use this to emit a short sound when specific buttons are pressed. (Sometimes the automation triggered by the button does not have immediate feedback). By default, the top level script is called if (and only if) the device declares `callback: true`.
@@ -103,8 +107,47 @@ In addition to scripts, you can build automations that are triggered by the even
       entity_id:
         - light.living_room_floor_lamp
 ```
+## Scheduling
+The component provides an advanced scheduling mechanism using schedules that change the functionality of a device button (`mapping`) depending on the schedule implementation. The design supports multiple schedule types, though only the `TimeSchedule` has been implemented so far. This leaves the possibility to define other schedule types in the future. For example, one that is active when a Home Assistant template condition evaluates to `true`.)
 
-# State Tracking
+You can define any number of schedules, with or without overlapping times. If your schedules overlap, then both schedule scripts are triggered.
+
+The default schedule will be executed if no other schedule is active or no other schedules are defined for the mapping. 
+```yaml
+processor:
+  - platform: mqtt_code
+    topic: /rf/all
+    callback_script: script.buzz_short
+    entities: !include rf_codes.yaml
+    event: True
+    entities:
+      - name: Wall Button 
+        type: panel
+        schedules:
+          morning:
+            type: time
+            start_time: '08:00:00'
+            end_time: '08:00:00'
+          evening:
+            type: time
+            start_time: '18:00:00'
+            end_time: '23:00:00'
+        mappings:
+          button_1:
+            payload: 1870753
+            actions:
+              morning:
+                - service: light.toggle
+                  entity_id: light.lounge_lamp
+              evening:
+                - service: media_player.pause
+                  entity_id: media_player.tv
+              default:
+                - service: fan.toggle
+                  entity_id: fan.bedroom_fan
+
+```
+## State Tracking
 The component creates entities for each device defined in the configuration. An example state is shown below:
 ```json
 {
@@ -116,8 +159,9 @@ The component creates entities for each device defined in the configuration. An 
 }
 ```
 
+
 # Future Enhancements
-* Group multiple devices into larger entities representing the physical device.
+[x] Group multiple devices into larger entities representing the physical device.
 
 # Automatic updates
 Use the `custom_updater` component to track updates.
