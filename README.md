@@ -103,8 +103,14 @@ In addition to scripts, you can build automations that are triggered by the even
       entity_id:
         - light.living_room_floor_lamp
 ```
+## Scheduling
+The component provides the ability to define custom schedules that change the functionality of a button depending on the time of day.
 
-# State Tracking
+```yaml
+
+
+```
+## State Tracking
 The component creates entities for each device defined in the configuration. An example state is shown below:
 ```json
 {
@@ -115,6 +121,7 @@ The component creates entities for each device defined in the configuration. An 
     'global_callback': 'script.buzz_short'
 }
 ```
+
 
 # Future Enhancements
 * Group multiple devices into larger entities representing the physical device.
