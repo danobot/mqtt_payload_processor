@@ -68,6 +68,10 @@ Where the file has the following contents:
   payload: 5842322
 ```
 # Configuration
+**Device:** A high level device containing many entities. E.g. Wall panel with multiple buttons.
+**Mapping** A button on a wall panel triggered by an MQTT payload. Contains many actions that define scripts for one or more schedules (including the `default` schedule).
+**Schedule:** Defines when a certain set of actions is executed.
+
 
 ## Callback Scripts
 You can define a script to be called as a sort of callback function. I use this to emit a short sound when specific buttons are pressed. (Sometimes the automation triggered by the button does not have immediate feedback). By default, the top level script is called if (and only if) the device declares `callback: true`.
@@ -104,10 +108,43 @@ In addition to scripts, you can build automations that are triggered by the even
         - light.living_room_floor_lamp
 ```
 ## Scheduling
-The component provides the ability to define custom schedules that change the functionality of a button depending on the time of day.
+The component provides the ability to define custom schedules for a device that change the functionality of a device button (`mapping`) depending on the schedule implementation. The component is designed to supports multiple schedule types, though only `TimeSchedule`s have been implemented so far. This leaves the possibility to define other schedule types in the future. (Such as one that is active when a Home Assistant template condition evaluates to `true`.)
 
+You can define any number of schedules, with or without overlapping times. If your schedules overlap, then there is a possibility that both schedule actions are triggered.
+
+The default schedule will be executed if no other schedule is active or no other schedules are defined for the mapping. 
 ```yaml
-
+processor:
+  - platform: mqtt_code
+    topic: /rf/all
+    callback_script: script.buzz_short
+    entities: !include rf_codes.yaml
+    event: True
+    entities:
+      - name: Wall Button 
+        type: panel
+        schedules:
+          morning:
+            type: time
+            start_time: '08:00:00'
+            end_time: '08:00:00'
+          evening:
+            type: time
+            start_time: '18:00:00'
+            end_time: '23:00:00'
+        mappings:
+          button_1:
+            payload: 1870753
+            actions:
+              morning:
+                - service: light.toggle
+                  entity_id: light.lounge_lamp
+              evening:
+                - service: media_player.pause
+                  entity_id: media_player.tv
+              default:
+                - service: fan.toggle
+                  entity_id: fan.bedroom_fan
 
 ```
 ## State Tracking
@@ -124,7 +161,7 @@ The component creates entities for each device defined in the configuration. An 
 
 
 # Future Enhancements
-* Group multiple devices into larger entities representing the physical device.
+[x] Group multiple devices into larger entities representing the physical device.
 
 # Automatic updates
 Use the `custom_updater` component to track updates.
