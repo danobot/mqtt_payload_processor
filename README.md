@@ -1,8 +1,8 @@
 # Introduction
-Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Provides a neat way to decouple implementation specific payloads (such as RF codes) from your Home Assistant configuration.
+Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Provides a neat way to decouple implementation specific payloads (such as RF codes) from your Home Assistant configuration. Define schedule specific actions to execute when a device button is triggered.
 
 ## How does it work?
-You need have some kind of device that emits specific payloads on an MQTT topic that you want to convert to Home Assistant events. My use case is integration with OpenMQTTGateway where RF payloads are sent on a specific MQTT topic.
+You need have some kind of device that emits __specific payloads__ on an MQTT topic that you want to convert to Home Assistant events. My use case is integration with OpenMQTTGateway where RF payloads are sent on a specific MQTT topic.
 
 For example, an RF motion sensor, door sensor and wall button panel may send the following messages on `/rf/all`:
 
@@ -12,7 +12,7 @@ For example, an RF motion sensor, door sensor and wall button panel may send the
 /rf/all 136566
 ```
 
-Each payload is unique to a device.
+Each payload is unique to a device. Some devices have multiple payloads.
 
 This component allows you to name and define these devices (including their respective RF codes) in one central location. The rest of your Home Assistant configuration then refers to events and callback scripts instead. (This way your RF codes are not duplicated and used throughout the configuration.)
 
@@ -108,9 +108,9 @@ In addition to scripts, you can build automations that are triggered by the even
         - light.living_room_floor_lamp
 ```
 ## Scheduling
-The component provides the ability to define custom schedules for a device that change the functionality of a device button (`mapping`) depending on the schedule implementation. The component is designed to supports multiple schedule types, though only `TimeSchedule`s have been implemented so far. This leaves the possibility to define other schedule types in the future. (Such as one that is active when a Home Assistant template condition evaluates to `true`.)
+The component provides an advanced scheduling mechanism using schedules that change the functionality of a device button (`mapping`) depending on the schedule implementation. The design supports multiple schedule types, though only the `TimeSchedule` has been implemented so far. This leaves the possibility to define other schedule types in the future. For example, one that is active when a Home Assistant template condition evaluates to `true`.)
 
-You can define any number of schedules, with or without overlapping times. If your schedules overlap, then there is a possibility that both schedule actions are triggered.
+You can define any number of schedules, with or without overlapping times. If your schedules overlap, then both schedule scripts are triggered.
 
 The default schedule will be executed if no other schedule is active or no other schedules are defined for the mapping. 
 ```yaml
