@@ -12,5 +12,12 @@
       "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/mqtt_code.py",
       "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
       "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
+    },
+    "yaml_scheduler": {
+      "version": "1.0.1",
+      "local_location": "/custom_components/processor/yaml_scheduler.py",
+      "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/yaml_scheduler.py",
+      "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
+      "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
     }
 }
