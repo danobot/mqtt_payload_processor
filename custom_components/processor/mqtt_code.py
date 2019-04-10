@@ -269,12 +269,12 @@ class MqttButton(Mapping):
     #         'type': self.type
     #     }
 
-    def message_received(self, topic, payload, qos):
+    def message_received(self, message):
         """Handle new MQTT messages."""
 
         # self.log.debug("Message received: " + str(payload))
 
-        self.process(payload)
+        self.process(message.payload)
 
     def process(self, payload):
         

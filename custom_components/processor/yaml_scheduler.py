@@ -1,5 +1,8 @@
 import logging;
-
+from datetime import datetime,  timedelta, date, time
+import homeassistant.helpers.script as script
+_LOGGER = logging.getLogger(__name__)
+from homeassistant.util import dt
 class Scheduler:
 
   def __init__(self, yaml):
@@ -63,7 +66,7 @@ class Action:
         
         # self.script = Script(hass, args, name, self.async_update_ha_state)
 
-    def execute(self, schedule):
+    def execute(self, schedule): ## passed in call-back function
         if self.schedule_name == schedule:
             self.log.debug("Executing actions in Action {}".format(self.schedule_name)) 
             script.call_from_config(self.mapping.device.hass, self._script_config)
