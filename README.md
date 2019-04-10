@@ -107,12 +107,28 @@ In addition to scripts, you can build automations that are triggered by the even
       entity_id:
         - light.living_room_floor_lamp
 ```
+
+## Defining Actions
+The following configuration shows how to assign a script action directly to the mapping.
+
+```yaml
+    - name: Black Button 
+      type: panel
+      mappings:
+        button:
+          payload: 1870753
+          actions:
+            default:
+              - service: fan.toggle
+                entity_id: fan.living_room_fan
+```
 ## Scheduling
 The component provides an advanced scheduling mechanism using schedules that change the functionality of a device button (`mapping`) depending on the schedule implementation. The design supports multiple schedule types, though only the `TimeSchedule` has been implemented so far. This leaves the possibility to define other schedule types in the future. For example, one that is active when a Home Assistant template condition evaluates to `true`.)
 
 You can define any number of schedules, with or without overlapping times. If your schedules overlap, then both schedule scripts are triggered.
 
 The default schedule will be executed if no other schedule is active or no other schedules are defined for the mapping. 
+
 ```yaml
 processor:
   - platform: mqtt_code
