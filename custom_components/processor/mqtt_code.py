@@ -18,7 +18,7 @@ from homeassistant.core import HomeAssistant as hass
 from homeassistant.components.script import ScriptEntity
 from homeassistant.loader import bind_hass
 import homeassistant.helpers.script as script 
-from custom_components.processor.yaml_scheduler import Action, Scheduler, TimeSchedule
+from custom_components.processor.yaml_scheduler import Action, Scheduler, TimeSchedule, Mapping
 # from datetimerange import DateTimeRange
 
 VERSION = '1.0.1'
@@ -183,25 +183,25 @@ class Device(ProcessorDevice):
 
 
 
-class Mapping:
-    def __init__(self, name, config, device):
-        self.name = name
-        self.device = device
-        self.log = logging.getLogger("{}.mappings.{}".format(device.log.name, name))
-        self._schedule_actions = {}
-        try:
-            for key, item in config.get('actions').items(): 
-                self._schedule_actions[key] = Action(self, key, item)
-        except AttributeError as a:
-            self.log.debug("No schedule actions defined.")
+# class Mapping:
+#     def __init__(self, name, config, device):
+#         self.name = name
+#         self.device = device
+#         self.log = logging.getLogger("{}.mappings.{}".format(device.log.name, name))
+#         self._schedule_actions = {}
+#         try:
+#             for key, item in config.get('actions').items(): 
+#                 self._schedule_actions[key] = Action(self, key, item)
+#         except AttributeError as a:
+#             self.log.debug("No schedule actions defined.")
 
-    def run_actions(self, schedule_names):
-        self.log.debug(schedule_names)
-        self.log.debug(self._schedule_actions)
-        for s in schedule_names:
-            if s in self._schedule_actions.keys():
-                for name, action in self._schedule_actions.items():
-                    action.execute(s) # method will only run actions if schedule names match
+#     def run_actions(self, schedule_names):
+#         self.log.debug(schedule_names)
+#         self.log.debug(self._schedule_actions)
+#         for s in schedule_names:
+#             if s in self._schedule_actions.keys():
+#                 for name, action in self._schedule_actions.items():
+#                     action.execute(s) # method will only run actions if schedule names match
         # If no actions match at the current time:
         # self.log.error("Schedule name {} is not defined.".format(s.name))
         # if 'default' in self._schedule_actions:
