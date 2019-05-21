@@ -8,7 +8,7 @@ import logging
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.entity import Entity
 _LOGGER = logging.getLogger(__name__)
-VERSION = '2.0.0'
+VERSION = '2.0.1'
 
 DEPENDENCIES = ['mqtt']
 
