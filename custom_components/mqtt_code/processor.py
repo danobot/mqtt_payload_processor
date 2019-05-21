@@ -34,10 +34,10 @@ DEFAULT_ACTION = 'default'
 _LOGGER = logging.getLogger(__name__)
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
-    
+    from homeassistant.components import mqtt
     entities = []
 
-    mqtt = loader.get_component(hass, 'mqtt')
+    # mqtt = loader.get_component(hass, 'mqtt')
     topic = config.get('topic', DEFAULT_TOPIC)
     _LOGGER.info("Platform Config:" + str(config))
 
