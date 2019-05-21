@@ -3,6 +3,7 @@ from datetime import datetime,  timedelta, date, time
 import homeassistant.helpers.script as script
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.util import dt
+VERSION='2.0.0'
 class Scheduler:
 
   def __init__(self, yaml):

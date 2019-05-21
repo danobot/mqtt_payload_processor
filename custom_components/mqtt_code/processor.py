@@ -5,7 +5,7 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v1.0.1
+# Version:          v2.0.0
 
 import homeassistant.loader as loader
 import logging
@@ -21,7 +21,7 @@ import homeassistant.helpers.script as script
 from custom_components.processor.yaml_scheduler import Action, Scheduler, TimeSchedule, Mapping
 # from datetimerange import DateTimeRange
 
-VERSION = '1.0.1'
+VERSION = '2.0.0'
 
 DEPENDENCIES = ['mqtt']
 # REQUIREMENTS = ['datetimerange']
