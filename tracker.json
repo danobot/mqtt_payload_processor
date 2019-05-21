@@ -4,20 +4,20 @@
       "local_location": "/custom_components/processor/__init__.py",
       "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/__init__.py",
       "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
-      "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
+      "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest",
+      "resources": [
+        "https://raw.githubusercontent.com/pnbruckner/homeassistant-config/master/custom_components/processor/yaml_scheduler.py",
+        "https://raw.githubusercontent.com/pnbruckner/homeassistant-config/master/custom_components/processor/manifest.json"
+      ]
     },
-    "mqtt_code_platform": {
+    "processor_mqtt_code_platform": {
       "version": "2.0.0",
-      "local_location": "/custom_components/processor/mqtt_code.py",
-      "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/mqtt_code.py",
+      "local_location": "/custom_components/mqtt_code/__init__.py",
+      "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/mqtt_code/__init__.py",
       "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
-      "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
-    },
-    "yaml_scheduler": {
-      "version": "2.0.0",
-      "local_location": "/custom_components/processor/yaml_scheduler.py",
-      "remote_location": "https://raw.githubusercontent.com/danobot/mqtt_payload_processor/master/custom_components/processor/yaml_scheduler.py",
-      "visit_repo": "https://github.com/danobot/mqtt_payload_processor",
-      "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest"
+      "changelog": "https://github.com/danobot/mqtt_payload_processor/releases/latest",
+      "resources": [
+        "https://raw.githubusercontent.com/pnbruckner/homeassistant-config/master/custom_components/processor/processor.py"
+      ]
     }
 }
