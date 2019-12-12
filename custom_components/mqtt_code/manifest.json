@@ -1,6 +1,6 @@
 {
   "domain": "processor",
-  "name": "Message Processor Component",
+  "name": "MQTT Message Processor Component",
   "documentation": "https://github.com/danobot/mqtt_payload_processor",
   "dependencies": ["mqtt"],
   "codeowners": ["@danobot"],
