@@ -70,8 +70,10 @@ class Action:
     def execute(self, schedule): ## passed in call-back function
         if self.schedule_name == schedule:
             self.log.debug("Executing actions in Action {}".format(self.schedule_name)) 
-            script.call_from_config(self.mapping.device.hass, self._script_config)
-
+            try:
+                script.call_from_config(self.mapping.device.hass, self._script_config)
+            except Exception as e:
+                self.log.error("Error calling supplied script: " + str(e))
             
 
 

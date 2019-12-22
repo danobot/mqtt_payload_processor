@@ -117,10 +117,11 @@ class Device(ProcessorDevice):
     def get_active_schedules(self):
         """ Determine which schedules apply currently """
         active = []
-        for name, schedule in self._schedules.items():
-            self.log.debug("Checking if {} is active".format(name))
-            if schedule.is_active():
-                active.append(schedule.name)
+        if self._schedules is not None:
+            for name, schedule in self._schedules.items():
+                self.log.debug("Checking if {} is active".format(name))
+                if schedule.is_active():
+                    active.append(schedule.name)
         
         if len(active) == 0:
             active.append(DEFAULT_ACTION)
