@@ -5,7 +5,7 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v2.0.1
+# Version:          v2.0.2
 
 import homeassistant.loader as loader
 import logging
@@ -21,7 +21,7 @@ import homeassistant.helpers.script as script
 from custom_components.processor.yaml_scheduler import Action, Scheduler, TimeSchedule, Mapping
 # from datetimerange import DateTimeRange
 
-VERSION = '2.0.1'
+VERSION = '2.0.2'
 
 DEPENDENCIES = ['mqtt']
 # REQUIREMENTS = ['datetimerange']
@@ -74,6 +74,7 @@ class Device(ProcessorDevice):
         self.attributes = {}
         self._mappings = []
         for key, item in args.get('mappings').items(): # for each mapping
+            item['globalLogbook'] = args.get('log', False)
             item['globalCallbackScript'] = args.get('globalCallbackScript', None)
             item['globalEvent'] = args.get('globalEvent')
 
@@ -242,11 +243,11 @@ class MqttButton(Mapping):
         self.log.debug("Payloads ON: " + str(self.payloads_on))
         self.log.debug("Payloads OFF: " + str(self.payloads_off))
         self.type = config.get('type', None)
-        self.log_events = config.get('log', False)
         self.event = config.get('event', False)
         self.callback = config.get('callback', False)
         self.callback_script = config.get('callback_script', False)
         self.globalCallbackScript = config.get('globalCallbackScript', False)
+        self.log_events = config.get('globalLogbook', False)
         self.globalEvent = config.get('globalEvent', False)
         
         self._always_active = False
@@ -303,6 +304,20 @@ class MqttButton(Mapping):
         self.last_triggered = dt.now()
         self.log.debug("name is " + self.name)
         self.device.update(**{self.name:self.last_triggered})
+        if self.log_events:
+            log_data= {
+                'name':  str( self.name) ,
+                'message': " was triggered by RF code " +  str(payload),
+                'entity_id': self.device.entity_id,
+                'domain': 'processor'
+            }
+            # if self.type == 'button':
+            #     log_data['message'] = 'was pressed'
+
+            # if self.type == 'motion':
+            #     log_data['message'] = 'was activated'
+
+            self.device.hass.services.call('logbook', 'log', log_data)
         # self.async_schedule_update_ha_state(True)
 
 
@@ -319,18 +334,7 @@ class MqttButton(Mapping):
                 'state': action
             })  
 
-        if self.log_events:
-            log_data = {
-                'name': self.name,        
-                'message': 'was triggered'
-            }
-            if self.type == 'button':
-                log_data['message'] = 'was pressed'
-
-            if self.type == 'motion':
-                log_data['message'] = 'was activated'
-
-            self.device.hass.services.call('logbook', 'log', log_data)
+        
         
         if self.globalCallbackScript is not None and self.callback:
             self.log.info("Running global callback script: " + self.globalCallbackScript)
