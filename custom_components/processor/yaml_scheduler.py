@@ -71,7 +71,7 @@ class Action:
         if self.schedule_name == schedule:
             self.log.debug("Executing actions in Action {}".format(self.schedule_name)) 
             try:
-                script.call_from_config(self.mapping.device.hass, self._script_config)
+                script.Script.call_from_config(self.mapping.device.hass, self._script_config)
             except Exception as e:
                 self.log.error("Error calling supplied script: " + str(e))
             
