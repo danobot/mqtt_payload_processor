@@ -1,6 +1,8 @@
 # Introduction
 Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Provides a neat way to decouple implementation specific payloads (such as RF codes) from your Home Assistant configuration. Define schedule specific actions to execute when a device button is triggered.
 
+![Diagram](images/diagram.png)
+
 # Getting Stated
 The use case for this component is a little abstract and difficult to understand (i forget myself sometimes...). Please read the full documentation which gives a good introduction to what this component is about.
 
