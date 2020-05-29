@@ -10,6 +10,7 @@
 import homeassistant.loader as loader
 import logging
 import asyncio
+import json
 from datetime import datetime,  timedelta, date, time
 from homeassistant.helpers.entity import Entity
 from custom_components.processor import ProcessorDevice
@@ -133,7 +134,7 @@ class Device(ProcessorDevice):
         return self.attributes.copy()
     def update(self, wait=False, **kwargs):
         """ Called from different methods to report a state attribute change """
-        self.log.debug("Update called with {}".format(str(kwargs)))
+        # self.log.debug("Update called with {}".format(str(kwargs)))
         for k,v in kwargs.items():
             if v is not None:
                 self.set_attr(k,v)
@@ -223,7 +224,21 @@ class MqttButton(Mapping):
         self.last_action = 'none'
         self.payloads_on = []
         self.payloads_off = []
-    
+    # self.alert = Alert(
+    #             self.device.hass,
+    #             object_id,
+    #             name,
+    #             watched_entity_id,
+    #             alert_state,
+    #             repeat,
+    #             skip_first,
+    #             message_template,
+    #             done_message_template,
+    #             notifiers,
+    #             can_ack,
+    #             title_template,
+    #             data,
+    #         )
         self.name = name
         # self.log = logging.getLogger(__name__ + '.' + self.name)
         self.log.debug("Init Config: "  +str(config))
@@ -247,7 +262,7 @@ class MqttButton(Mapping):
         self.callback = config.get('callback', False)
         self.callback_script = config.get('callback_script', False)
         self.globalCallbackScript = config.get('globalCallbackScript', False)
-        self.log_events = config.get('globalLogbook', False)
+        self.log_events = config.get('globalLogbook', False) or config.get('log', False)
         self.globalEvent = config.get('globalEvent', False)
         
         self._always_active = False
@@ -271,32 +286,36 @@ class MqttButton(Mapping):
     #         'type': self.type
     #     }
 
-    def message_received(self, message):
-        """Handle new MQTT messages."""
-
-        # self.log.debug("Message received: " + str(payload))
-
-        self.process(message.payload)
-
     def process(self, payload):
-        
-        # self.log.debug("Called process on {}".format(self.name))
-        # # single payload defined
-
-        # self.log.debug("Is {} a match in {}?".format(payload, str(self.payloads_on)))
+        j = json.loads(payload)
+        # self.log.debug("Called process on %s %s" % (str(j), str(dir(j))))
+        # single payload defined
+        # for k in j.keys():
+            # self.log.debug("%s %s" % (k, j[k]))
+        value = j["value"]
+        self.log.debug("Is %s a match for %s?" % (value, self.name))
         for p in self.payloads_on:
-            if int(p) == int(payload):
-                self.log.debug("Processing {} on code".format(p))
+            if int(p) == value:
+                self.log.info("Processing %s on code" % (p))
                 self.handleRFCode(ACTION_ON)
                 self.update_state(payload, ACTION_ON)
                 break
 
         for p in self.payloads_off:
-            if int(p) == int(payload):
-                self.log.debug("Processing {} off code".format(p))
+            if int(p) == value:
+                self.log.info("Processing %s off code" % (p))
                 self.handleRFCode(ACTION_OFF)
                 self.update_state(payload, ACTION_OFF)
                 break
+
+    def message_received(self, message):
+        """Handle new MQTT messages."""
+
+        self.log.debug("Message received: " + str(message))
+
+        self.process(message.payload)
+        self.log.debug("after process")
+
 
     def update_state(self, payload, action):
         self.last_payload = payload

@@ -1,7 +1,12 @@
 # Introduction
 Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Provides a neat way to decouple implementation specific payloads (such as RF codes) from your Home Assistant configuration. Define schedule specific actions to execute when a device button is triggered.
 
+
+
 ## How does it work?
+
+![Diagram](images/diagram.png)
+
 You need have some kind of device that emits __specific payloads__ on an MQTT topic that you want to convert to Home Assistant events. My use case is integration with OpenMQTTGateway where RF payloads are sent on a specific MQTT topic.
 
 For example, an RF motion sensor, door sensor and wall button panel may send the following messages on `/rf/all`:
