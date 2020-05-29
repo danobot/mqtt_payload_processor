@@ -1,7 +1,12 @@
 # Introduction
 Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Provides a neat way to decouple implementation specific payloads (such as RF codes) from your Home Assistant configuration. Define schedule specific actions to execute when a device button is triggered.
 
+## Use cases:
 
+* **Gateway:** Acts as a gateway to convert RF codes (or other implementation specific identifier) to native Home Assistant events
+* **Schedules:** reuse the same RF device (wall panel or remote control) to perform mulitple actions depending on some pre-defined schedule
+* **Clean & Maintainable:** Store all RF specific integer codes in one location and use events as triggers in automations.
+* **Post processing:** for payloads delivered by Open MQTT Gateway
 
 ## How does it work?
 
@@ -23,7 +28,7 @@ This component allows you to name and define these devices (including their resp
 
 My examples are specific to RF devices, but you can use this component in any situation where implementation specific data is sent on an MQTT topic and you want to add a layer of abstraction on top of it.
 
-# Getting Stated
+# Getting Started
 
 Add the following to your configuration:
 ```yaml
