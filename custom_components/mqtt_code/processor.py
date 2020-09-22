@@ -5,7 +5,7 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v2.0.2
+# Version:          v2.0.3
 
 import homeassistant.loader as loader
 import logging
