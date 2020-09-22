@@ -7,8 +7,9 @@ from homeassistant.helpers import discovery
 import logging
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.entity import Entity
+# from homeassistant.compoennts.alert import Alert
 _LOGGER = logging.getLogger(__name__)
-VERSION = '2.0.1'
+VERSION = '2.0.3'
 
 DEPENDENCIES = ['mqtt']
 

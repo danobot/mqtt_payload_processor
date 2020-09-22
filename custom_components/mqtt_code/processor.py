@@ -5,7 +5,7 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v2.0.2
+# Version:          v2.0.3
 
 import homeassistant.loader as loader
 import logging
@@ -293,7 +293,7 @@ class MqttButton(Mapping):
         # for k in j.keys():
             # self.log.debug("%s %s" % (k, j[k]))
         value = j["value"]
-        self.log.debug("Is %s a match for %s?" % (value, self.name))
+        # self.log.debug("Is %s a match for %s?" % (value, self.name))
         for p in self.payloads_on:
             if int(p) == value:
                 self.log.info("Processing %s on code" % (p))
@@ -311,10 +311,9 @@ class MqttButton(Mapping):
     def message_received(self, message):
         """Handle new MQTT messages."""
 
-        self.log.debug("Message received: " + str(message))
+        # self.log.debug("Message received: " + str(message))
 
         self.process(message.payload)
-        self.log.debug("after process")
 
 
     def update_state(self, payload, action):
@@ -344,8 +343,8 @@ class MqttButton(Mapping):
     def handleRFCode(self, action):
         # self.hass.states.set(DOMAIN + '.last_triggered_by', self.name)
         # hass.states.set('rf_processor.last_triggered_time', time.localtime(time.time()))
-        self.log.debug("event: " + str(self.event))
-        self.log.debug("globalEvent: " + str(self.globalEvent))
+        # self.log.debug("event: " + str(self.event))
+        # self.log.debug("globalEvent: " + str(self.globalEvent))
         self.device.handle_event(self)
         if self.event or self.globalEvent:
             self.log.debug("Sending event.")

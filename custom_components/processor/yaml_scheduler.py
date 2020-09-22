@@ -1,9 +1,11 @@
 import logging;
 from datetime import datetime,  timedelta, date, time
 import homeassistant.helpers.script as script
+from homeassistant.core import Context
+from . import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.util import dt
-VERSION='2.0.2'
+VERSION='2.0.3'
 class Scheduler:
 
   def __init__(self, yaml):
@@ -40,7 +42,7 @@ class Action:
         # super(Action,self).__init__(self.hass,'processor-action' + name,name,args)
         self.log = logging.getLogger("{}.actions.{}".format(mapping.log.name, name))
         self.log.info("Creating action " + name)
-        if 'name' is None:
+        if name is None:
             self.log.error("Missing name in Action")
         self.schedule_name = name
         self.log.debug("Script Sequence: " + str(args))
@@ -71,9 +73,14 @@ class Action:
         if self.schedule_name == schedule:
             self.log.debug("Executing actions in Action {}".format(self.schedule_name)) 
             try:
-                script.Script.call_from_config(self.mapping.device.hass, self._script_config)
-            except Exception as e:
+                # self.log.error(str(dir(script)))
+                # self.log.error(str(dir(script.service)))
+                s = script.Script(self.mapping.device.hass, self._script_config, self.schedule_name, DOMAIN)
+                context = Context(parent_id="device.%s" % (self.mapping.device.name), id="actions.{}".format( self.schedule_name))
+                s.run(context=context)
+            except Exception as e:  
                 self.log.error("Error calling supplied script: " + str(e))
+                raise e
             
 
 
