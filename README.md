@@ -29,8 +29,10 @@ This component allows you to name and define these devices (including their resp
 My examples are specific to RF devices, but you can use this component in any situation where implementation specific data is sent on an MQTT topic and you want to add a layer of abstraction on top of it.
 
 # Getting Started
+Installation with HACS is not possible due to HACS limitations. This component comes with a new domain and platform. The latter is not loaded with HACS.
+Copy the folders in `custom_components` directory to the same directory in your Home Assistant configuration directory.
 
-Add the following to your configuration:
+Then add the following to your configuration:
 ```yaml
 
 processor:
