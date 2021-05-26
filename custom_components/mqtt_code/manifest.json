@@ -4,5 +4,6 @@
   "documentation": "https://github.com/danobot/mqtt_payload_processor",
   "dependencies": ["mqtt"],
   "codeowners": ["@danobot"],
-  "requirements": []
+  "requirements": [],
+  "version": "2.0.3"
 }
