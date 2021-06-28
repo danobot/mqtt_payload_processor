@@ -1,9 +1,11 @@
 {
-  "domain": "processor",
+  "domain": "mqtt_code",
   "name": "MQTT Message Processor Component",
   "documentation": "https://github.com/danobot/mqtt_payload_processor",
   "issue_tracker": "https://github.com/danobot/mqtt_payload_processor/issues",
   "dependencies": ["mqtt"],
   "codeowners": ["@danobot"],
-  "requirements": []
+  "requirements": [],
+  "iot_class": "local_polling",
+  "version": "2.1.0"
 }
