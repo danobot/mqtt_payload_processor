@@ -6,6 +6,7 @@ from . import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.util import dt
 VERSION='2.0.3'
+
 class Scheduler:
 
   def __init__(self, yaml):
