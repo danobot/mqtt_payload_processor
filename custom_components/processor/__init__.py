@@ -13,7 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 import asyncio
 # from homeassistant.compoennts.alert import Alert
 _LOGGER = logging.getLogger(__name__)
-VERSION = '2.0.3'
+VERSION = '2.1.0'
 
 DEPENDENCIES = ['mqtt']
 PLATFORMS = ['mqtt_code']
