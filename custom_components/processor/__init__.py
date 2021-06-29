@@ -13,21 +13,16 @@ from homeassistant.config_entries import ConfigEntry
 import asyncio
 # from homeassistant.compoennts.alert import Alert
 _LOGGER = logging.getLogger(__name__)
-VERSION = '2.1.0'
+VERSION = '2.2.0'
 
 DEPENDENCIES = ['mqtt']
 PLATFORMS = ['mqtt_code']
 
-
-
-
-
-
 async def async_setup(hass, config):
-    """Set up the Hello World component."""
+    """Set up the Processor component."""
+    _LOGGER.info("PROCESSOR INIT - async_setup")
     component = hass.data[DOMAIN] = EntityComponent(
         _LOGGER, DOMAIN, hass)
-    _LOGGER.info("processor/__init__.py - async_setup")
     domain_config = config[DOMAIN]
     _LOGGER.info(" domain_config " + str(domain_config))
 
@@ -41,13 +36,9 @@ async def async_setup(hass, config):
         hass.helpers.discovery.load_platform(platform, DOMAIN, domain_config, config)
         # )
     _LOGGER.info("after loading platforms")
-    # await component.async_setup(config)
+    await component.async_setup(config) # is this line required?
 
     return True
-
-
-
-
 
 
 class ProcessorDevice(Entity):
