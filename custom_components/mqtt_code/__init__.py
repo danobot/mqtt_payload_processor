@@ -11,7 +11,7 @@ DOMAIN = 'mqtt_code'
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up climate entities."""
-    _LOGGER.info("mqtt_code/__init__.py - async_setup")
+    _LOGGER.info("mqtt_code/__init__.py - async_setup" + str(config))
     component = hass.data[DOMAIN] = EntityComponent(
         _LOGGER, DOMAIN, hass)
     await component.async_setup(config)
