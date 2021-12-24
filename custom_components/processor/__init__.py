@@ -52,7 +52,7 @@ class ProcessorDevice(Entity):
         self.log.info(self.hass)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         return {}
 
     def process(self, **kwargs):
