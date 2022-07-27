@@ -1,6 +1,6 @@
 {
   "name": "Processor",
-  "homeassistant": "0.115.1",
+  "homeassistant": "2022.7.6",
   "domains": ["processor"],
   "iot_class": ["Local Push"]
 }

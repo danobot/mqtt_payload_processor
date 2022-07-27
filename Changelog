@@ -6,3 +6,4 @@ v0.3.0      Converted to component/platform
 v0.3.1      Reduce logging to DEBUG and update Readme
 v0.3.2      Event bug, state attributes
 v1.0.0      feat: entity aware and ability to schedule buttons
+v2.3.0      feat: add support for plain text messages
