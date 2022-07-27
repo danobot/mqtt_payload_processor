@@ -1,4 +1,6 @@
 {
   "name": "Processor",
-  "homeassistant": "0.115.1"
+  "homeassistant": "0.115.1",
+  "domains": ["processor"],
+  "iot_class": ["Local Push"]
 }
