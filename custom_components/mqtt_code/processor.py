@@ -5,7 +5,7 @@
 # E.g. RF codes, Bluetooth ids, etc.
 
 # Documentation:    https://github.com/danobot/mqtt_payload_processor
-# Version:          v2.0.3
+# Version:          v2.1.0
 
 import homeassistant.loader as loader
 import logging
@@ -24,13 +24,13 @@ from custom_components.processor.yaml_scheduler import Action, Scheduler, TimeSc
 VERSION = '2.2.0'
 DOMAIN = 'processor'
 DEPENDENCIES = ['mqtt']
-# REQUIREMENTS = ['datetimerange']
 CONF_TOPIC = 'topic'
 DEFAULT_TOPIC = '/rf/'
 ACTION_ON = 'on'
 ACTION_OFF = 'off'
 TYPE_WALLPANEL = 'panel'
 DEFAULT_ACTION = 'default'
+JSON_VALUE_ATTRIBUTE = 'value'
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -262,22 +262,26 @@ class MqttButton(Mapping):
     #     }
 
     def process(self, payload):
-        j = json.loads(payload)
+        value = payload
+        if payload[0] in ["{", "["]:
+            j = json.loads(payload)
+            value = j[JSON_VALUE_ATTRIBUTE]
+
+        value = str(value)
         # self.log.debug("Called process on %s %s" % (str(j), str(dir(j))))
         # single payload defined
         # for k in j.keys():
             # self.log.debug("%s %s" % (k, j[k]))
-        value = j["value"]
         # self.log.debug("Is %s a match for %s?" % (value, self.name))
         for p in self.payloads_on:
-            if int(p) == value:
+            if  str(p) == value:
                 self.log.info("Processing %s on code" % (p))
                 self.handleRFCode(ACTION_ON)
                 self.update_state(payload, ACTION_ON)
                 break
 
         for p in self.payloads_off:
-            if int(p) == value:
+            if str(p) == value:
                 self.log.info("Processing %s off code" % (p))
                 self.handleRFCode(ACTION_OFF)
                 self.update_state(payload, ACTION_OFF)
