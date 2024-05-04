@@ -10,6 +10,7 @@
 import homeassistant.loader as loader
 import logging
 import asyncio
+import hashlib
 import json
 from datetime import datetime,  timedelta, date, time
 from homeassistant.helpers.entity import Entity
@@ -18,6 +19,7 @@ from homeassistant.util import dt
 from homeassistant.core import HomeAssistant as hass, callback
 from homeassistant.components.script import ScriptEntity
 from homeassistant.loader import bind_hass
+import homeassistant.util.uuid as uuid_util
 import homeassistant.helpers.script as script
 from custom_components.processor.yaml_scheduler import Action, Scheduler, TimeSchedule, Mapping
 # from datetimerange import DateTimeRange
@@ -31,6 +33,8 @@ ACTION_OFF = 'off'
 TYPE_WALLPANEL = 'panel'
 DEFAULT_ACTION = 'default'
 JSON_VALUE_ATTRIBUTE = 'value'
+CONTEXT_ID_CHARACTER_LIMIT = 26
+DOMAIN_SHORT = "device"
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -170,7 +174,7 @@ class Device(ProcessorDevice):
         """ Schedules an entity state update with HASS """
         # _LOGGER.debug("Scheduled update with HASS")
         if self.may_update:
-            self.async_schedule_update_ha_state(True)
+            self.schedule_update_ha_state(True)
 
     def set_attr(self, k, v):
         # _LOGGER.debug("Setting state attribute {} to {}".format(k, v))
@@ -197,6 +201,7 @@ class MqttButton(Mapping):
         self.last_payload = None
         self.last_triggered = 'never'
         self.last_action = 'none'
+        self.field = None
         self.payloads_on = []
         self.payloads_off = []
     # self.alert = Alert(
@@ -218,6 +223,8 @@ class MqttButton(Mapping):
         # self.log = logging.getLogger(__name__ + '.' + self.name)
         self.log.debug("Init Config: "  +str(config))
         self.log.debug("Payloads: "  +str(self.payloads_on))
+        if 'field' in config:
+            self.field = config.get('field', None)
         if 'payload' in config:
             self.payloads_on.append(config.get('payload'))
         if 'payloads' in config:
@@ -265,10 +272,19 @@ class MqttButton(Mapping):
         value = payload
         if payload[0] in ["{", "["]:
             j = json.loads(payload)
-            value = j[JSON_VALUE_ATTRIBUTE]
+            self.log.debug("JSON payload: " + str(j))
+            self.log.debug("field: " + str(self.field))
+            # value = j[JSON_VALUE_ATTRIBUTE]
+            if self.field is not None and self.field in value:
+                value = str(j[self.field])
+            elif JSON_VALUE_ATTRIBUTE in value:
+                value = str(j[JSON_VALUE_ATTRIBUTE])
+            else:
+                self.log.warning("Payload does not contain field {} or default name 'value'.".format(self.field))
 
-        value = str(value)
-        # self.log.debug("Called process on %s %s" % (str(j), str(dir(j))))
+        else:
+            value = str(value)
+        self.log.debug("Comparisng extracted value from payload (%s)" % (str(value)))
         # single payload defined
         # for k in j.keys():
             # self.log.debug("%s %s" % (k, j[k]))
@@ -290,7 +306,7 @@ class MqttButton(Mapping):
     def message_received(self, message):
         """Handle new MQTT messages."""
 
-        self.log.debug("Message received: " + str(message))
+        # self.log.debug("Message received: " + str(message))
 
         self.process(message.payload)
 
@@ -301,11 +317,16 @@ class MqttButton(Mapping):
         self.last_triggered = dt.now()
         self.log.debug("name is " + self.name)
         self.device.update(**{self.name:self.last_triggered})
+        name_hash = hashlib.sha1(self.device.entity_id.encode("UTF-8")).hexdigest()[:6]
+        unique_id = uuid_util.random_uuid_hex()
+        context_id = f"{DOMAIN_SHORT}_{name_hash}_{unique_id}"
+        # Restrict id length to database field size
+        context_id = context_id[:CONTEXT_ID_CHARACTER_LIMIT]
         if self.log_events:
             log_data= {
                 'name':  str( self.name) ,
                 'message': " was triggered by RF code " +  str(payload),
-                'entity_id': self.device.entity_id,
+                'entity_id': context_id,
                 'domain': 'processor'
             }
             # if self.type == 'button':
