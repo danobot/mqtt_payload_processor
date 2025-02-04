@@ -3,13 +3,10 @@
 
 """
 DOMAIN = 'processor'
-from homeassistant.helpers import discovery
 import logging
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.entity import Entity
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import ConfigType
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.discovery import load_platform
 import asyncio
 # from homeassistant.compoennts.alert import Alert
 _LOGGER = logging.getLogger(__name__)
@@ -32,9 +29,8 @@ async def async_setup(hass, config):
     _LOGGER.info(" loading platforms")
 
     for platform in PLATFORMS:
-        # hass.async_create_task(
-        hass.helpers.discovery.load_platform(platform, DOMAIN, domain_config, config)
-        # )
+        load_platform(platform, DOMAIN, domain_config, config)
+        
     _LOGGER.info("after loading platforms")
     await component.async_setup(config) # is this line required?
 
