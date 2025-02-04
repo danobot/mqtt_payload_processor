@@ -1,6 +1,11 @@
 {
   "name": "Processor",
-  "homeassistant": "2022.7.6",
+  "version": "1.0.0",
+  "homeassistant": {
+    "min_version": "2022.7.6"
+  },
   "domains": ["processor"],
-  "iot_class": ["Local Push"]
+  "iot_class": "Local Push",
+  "documentation": "https://github.com/danobot/mqtt_payload_processor",
+  "issue_tracker": "https://github.com/danobot/mqtt_payload_processor/issues"
 }
