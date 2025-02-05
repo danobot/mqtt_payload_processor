@@ -10,7 +10,7 @@ from homeassistant.helpers.discovery import load_platform
 import asyncio
 # from homeassistant.compoennts.alert import Alert
 _LOGGER = logging.getLogger(__name__)
-VERSION = '2.3.0'
+VERSION = '2.3.1'
 
 DEPENDENCIES = ['mqtt']
 PLATFORMS = ['mqtt_code']
