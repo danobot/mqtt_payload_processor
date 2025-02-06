@@ -331,7 +331,7 @@ class MqttButton(Mapping, Entity):
 
     def message_received(self, message):
         """Handle new MQTT messages."""
-
+        print("Processing message:", message.payload)
         # self.log.debug("Message received: " + str(message))
 
         self.process(message.payload)
