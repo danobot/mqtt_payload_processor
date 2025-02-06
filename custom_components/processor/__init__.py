@@ -1,72 +1,60 @@
 """
-    Generic component for generic platforms that do stuff.
-
+    Generic processor component.
 """
-DOMAIN = 'processor'
 import logging
 from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.discovery import load_platform
-import asyncio
-# from homeassistant.compoennts.alert import Alert
+from importlib import import_module
+
 _LOGGER = logging.getLogger(__name__)
-VERSION = '2.3.0'
+VERSION = '2.3.1'
 
 DEPENDENCIES = ['mqtt']
-PLATFORMS = ['mqtt_code']
+DOMAIN = "processor"
+PLATFORMS = ["mqtt_code"]
 
 async def async_setup(hass, config):
     """Set up the Processor component."""
     _LOGGER.info("PROCESSOR INIT - async_setup")
-    component = hass.data[DOMAIN] = EntityComponent(
-        _LOGGER, DOMAIN, hass)
-    domain_config = config[DOMAIN]
-    _LOGGER.info(" domain_config " + str(domain_config))
+    domain_config = config.get(DOMAIN, [])
 
+    # EntityComponent handles adding entities to Home Assistant
+    component = hass.data[DOMAIN] = EntityComponent(_LOGGER, DOMAIN, hass)
 
-    hass.data.setdefault(DOMAIN, {})
-    # load platforms
-    _LOGGER.info(" loading platforms")
+    _LOGGER.info("Loading platforms...")
+    for platform_conf in domain_config:
+        platform = platform_conf.get("platform")
+        if platform:
+            try:
+                # Dynamically import the platform module
+                platform_module = import_module(f".{platform}", package="custom_components.processor")
 
-    for platform in PLATFORMS:
-        load_platform(platform, DOMAIN, domain_config, config)
-        
-    _LOGGER.info("after loading platforms")
-    await component.async_setup(config) # is this line required?
+                # Call the async_setup_platform function if it exists
+                if hasattr(platform_module, "async_setup_platform"):
+                    await platform_module.async_setup_platform(
+                        hass,
+                        config,
+                        component.async_add_entities,  # Correctly add entities
+                        platform_conf
+                    )
+                    _LOGGER.info(f"Successfully loaded platform: {platform}")
+                else:
+                    _LOGGER.warning(f"Platform {platform} does not have async_setup_platform.")
+            except ImportError as e:
+                _LOGGER.error(f"Failed to import platform {platform}: {e}")
 
+    _LOGGER.info("Finished loading platforms.")
     return True
 
 
 class ProcessorDevice(Entity):
-    hass = None
-
-    def __init__(self, config):
-        self.hass = self.hass
-        self.name = config.get('name', "Unnamed")
+    def __init__(self, hass, config):
+        self.hass = hass
+        self._name = config.get('name', 'Unnamed Device')
         self._unique_id = self.name
         self.log = logging.getLogger(__name__ + '.' + self.name)
-        self.log.info(self.hass)
-
-    @property
-    def extra_state_attributes(self):
-        return {}
+        self.log.info(f"Init Processor Device: {self._unique_id}")
 
     def process(self, **kwargs):
-
         return None
-
-
-
-    @property
-    def state(self):
-        """Return the state of the entity."""
-        return None
-
-    @property
-    def state_attributes(self):
-        """Return the state of the entity."""
-
-        return None
-
-
 

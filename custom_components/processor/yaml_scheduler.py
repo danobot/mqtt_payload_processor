@@ -1,11 +1,13 @@
 import logging;
 from datetime import datetime,  timedelta, date, time
+
+from attr import has
 import homeassistant.helpers.script as script
 from homeassistant.core import Context
 from . import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.util import dt
-VERSION='2.3.0'
+VERSION='2.3.1'
 
 class Scheduler:
 
@@ -13,7 +15,7 @@ class Scheduler:
     self.log = logging.getLogger(__name__)
     self._schedules = {}
     try:
-      for key, item in yaml.items(): 
+      for key, item in yaml.items():
         self._schedules[key] = TimeSchedule(key, item, self)
           # self._schedules[key] = ScheduleFactory.create(self, key, item, self)
     except AttributeError as a:
@@ -24,10 +26,10 @@ class Scheduler:
     else:
       self.log.debug("Some schedules defined.")
 
-  def addSubscriber(schedule, callback):
+  def addSubscriber(self, schedule, callback):
     if schedule not in self._schedules:
       self.log.error("Schedule not defined!")
-  
+
   def run(self):
       self.log.debug(self._schedules)
       self.log.debug(self._schedule_actions)
@@ -38,15 +40,16 @@ class Scheduler:
 
 class Action:
     """ What needs to happen for a given schedule. """
-    def __init__(self, mapping, name, args):
+    def __init__(self, mapping, name: str, args):
         self.mapping = mapping
         # super(Action,self).__init__(self.hass,'processor-action' + name,name,args)
         self.log = logging.getLogger("{}.actions.{}".format(mapping.log.name, name))
-        self.log.info("Creating action " + name)
+        self.log.info("Creating schedule action for schedule=" + name)
         if name is None:
             self.log.error("Missing name in Action")
         self.schedule_name = name
         self.log.debug("Script Sequence: " + str(args))
+
         # component = loader.get_component('script')
 
         # async def service_handler(service):
@@ -65,24 +68,40 @@ class Action:
         # hass.services.async_register(
         #     'script', object_id, service_handler, schema=vol.Schema(dict))
         self._script_config = args
+        # for step in args:
+        #    if not hasattr(step, 'data'):
+        #       step['data'] = {}
+        #       self._script_config.append(step)
+        self.log.debug("Script Sequence after data patchign: " + str(self._script_config))
+
 #         await component.async_add_entities([self.script])
-        
-        
+
+
         # self.script = Script(hass, args, name, self.async_update_ha_state)
 
     def execute(self, schedule): ## passed in call-back function
+        self.log.debug(f"execute self,eschle {self.schedule_name} input scheudule={schedule}")
+
         if self.schedule_name == schedule:
-            self.log.debug("Executing actions in Action {}".format(self.schedule_name)) 
+            self.log.debug("Executing actions in Action {}".format(self.schedule_name))
             try:
-                # self.log.error(str(dir(script)))
-                # self.log.error(str(dir(script.service)))
+                # self.log.debug(str(dir(script)))
+                # self.log.debug(str(dir(script.service)))
+                self.log.debug(f"Script Config: {self._script_config}")
+                self.log.debug(f"self.mapping: {self.mapping}")
+                self.log.debug(f"self.mapping.device: {self.mapping.device}")
+                self.log.debug(f"self.mapping.device.hass: {self.mapping.device.hass}")
                 s = script.Script(self.mapping.device.hass, self._script_config, self.schedule_name, DOMAIN)
-                context = Context(parent_id="device.%s" % (self.mapping.device.name), id="actions.{}".format( self.schedule_name))
+                parent_id = "device.%s" % (self.mapping.device.name)
+                self.log.debug(f"Context Parent ID: {parent_id}, Context ID: actions.{self.schedule_name}")
+                context = Context(parent_id=parent_id, id=f"actions.{self.schedule_name}")
                 s.run(context=context)
-            except Exception as e:  
-                self.log.error("Error calling supplied script: " + str(e))
+            except Exception as e:
+                import traceback
+                self.log.error(f"Error calling supplied script: {str(e)}")
+                self.log.error(traceback.format_exc())
                 raise e
-            
+
 
 
 
@@ -153,23 +172,36 @@ class TimeSchedule(Schedule):
 
 class Mapping:
     def __init__(self, name, config, device):
-      self.name = name
+
+      self._name = name
       self.device = device
       self.log = logging.getLogger("{}.mappings.{}".format(device.log.name, name))
+      self.log.info("Mapping init method called")
       self._schedule_actions = {}
+      self.log.debug(f"config.get('actions'): {config.get('actions')}")
       try:
-        for key, item in config.get('actions').items(): 
-          self._schedule_actions[key] = Action(self, key, item)
+        for key, item in config.get('actions').items():
+          self.log.debug(f"Setting up scheulde action for {key}")
+          action = Action(self, key, item)
+          self._schedule_actions[key] = action
+          self.log.debug(f"Schedule actions on Mapping: {self._schedule_actions}")
       except AttributeError as a:
-        self.log.debug("No schedule actions defined.")
+        self.log.debug(f"No schedule actions defined. {a}")
 
     def run_actions(self, schedule_names):
-        self.log.debug(schedule_names)
+        self.log.debug(f"Executing Action: {schedule_names}")
         self.log.debug(self._schedule_actions)
         for s in schedule_names:
+            self.log.debug(f"Looking at scheduleName: {s}")
+
             if s in self._schedule_actions.keys():
+                self.log.debug(f"if s in self._schedule_actions.keys()=True")
                 for name, action in self._schedule_actions.items():
+                    self.log.debug(f"Looking at each self._schedule_actions item. This item: {action}")
+                    self.log.debug(f"action.execute: {name} {action}")
                     action.execute(s) # method will only run actions if schedule names match
+            else:
+                self.log.debug(f"if s in self._schedule_actions.keys()=False")
         # If no actions match at the current time:
         # self.log.error("Schedule name {} is not defined.".format(s.name))
         # if 'default' in self._schedule_actions:
