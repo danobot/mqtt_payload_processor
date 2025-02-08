@@ -1,0 +1,29 @@
+{
+  "name": "mqtt-mqtt-payload_processor",
+  "version": "3.0.1",
+  "description": "Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Can be used to assign schedule-based actions to remote controls or button wall panels.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "release": "standard-version -a"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danobot/mqtt_payload_processor"
+  },
+  "author": "Daniel Mason",
+  "license": "GNU General Public License v3.0",
+  "devDependencies": {
+    "replace-in-file": "^3.4.3",
+    "semantic-release": "^15.13.3",
+    "standard-version": "^4.4.0",
+    "update-json-file": "^1.1.1"
+  },
+  "standard-version": {
+    "scripts": {
+      "precommit": "node postbump.js; git add custom_components/processor/__init__.py; git add custom_components/processor/manifest.json; git add package.json; git add custom_components/processor/mqtt_code.py; git add custom_components/processor/yaml_scheduler.py"
+    }
+  }
+}
