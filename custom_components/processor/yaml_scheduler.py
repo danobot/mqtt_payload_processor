@@ -80,7 +80,7 @@ class Action:
         # self.script = Script(hass, args, name, self.async_update_ha_state)
 
     def execute(self, schedule): ## passed in call-back function
-        self.log.debug(f"execute self,eschle {self.schedule_name} input scheudule={schedule}")
+        # self.log.debug(f"Execute schedule {self.schedule_name} input scheudule={schedule}")
 
         if self.schedule_name == schedule:
             self.log.debug("Executing actions in Action {}".format(self.schedule_name))
@@ -88,12 +88,12 @@ class Action:
                 # self.log.debug(str(dir(script)))
                 # self.log.debug(str(dir(script.service)))
                 self.log.debug(f"Script Config: {self._script_config}")
-                self.log.debug(f"self.mapping: {self.mapping}")
-                self.log.debug(f"self.mapping.device: {self.mapping.device}")
-                self.log.debug(f"self.mapping.device.hass: {self.mapping.device.hass}")
+                # self.log.debug(f"self.mapping: {self.mapping}")
+                # self.log.debug(f"self.mapping.device: {self.mapping.device}")
+                # self.log.debug(f"self.mapping.device.hass: {self.mapping.device.hass}")
                 s = script.Script(self.mapping.device.hass, self._script_config, self.schedule_name, DOMAIN)
                 parent_id = "device.%s" % (self.mapping.device.name)
-                self.log.debug(f"Context Parent ID: {parent_id}, Context ID: actions.{self.schedule_name}")
+                # self.log.debug(f"Context Parent ID: {parent_id}, Context ID: actions.{self.schedule_name}")
                 context = Context(parent_id=parent_id, id=f"actions.{self.schedule_name}")
                 s.run(context=context)
             except Exception as e:
@@ -178,13 +178,10 @@ class Mapping:
       self.log = logging.getLogger("{}.mappings.{}".format(device.log.name, name))
       self.log.info("Mapping init method called")
       self._schedule_actions = {}
-      self.log.debug(f"config.get('actions'): {config.get('actions')}")
       try:
         for key, item in config.get('actions').items():
-          self.log.debug(f"Setting up scheulde action for {key}")
           action = Action(self, key, item)
           self._schedule_actions[key] = action
-          self.log.debug(f"Schedule actions on Mapping: {self._schedule_actions}")
       except AttributeError as a:
         self.log.debug(f"No schedule actions defined. {a}")
 
@@ -192,13 +189,9 @@ class Mapping:
         self.log.debug(f"Executing Action: {schedule_names}")
         self.log.debug(self._schedule_actions)
         for s in schedule_names:
-            self.log.debug(f"Looking at scheduleName: {s}")
 
             if s in self._schedule_actions.keys():
-                self.log.debug(f"if s in self._schedule_actions.keys()=True")
                 for name, action in self._schedule_actions.items():
-                    self.log.debug(f"Looking at each self._schedule_actions item. This item: {action}")
-                    self.log.debug(f"action.execute: {name} {action}")
                     action.execute(s) # method will only run actions if schedule names match
             else:
                 self.log.debug(f"if s in self._schedule_actions.keys()=False")

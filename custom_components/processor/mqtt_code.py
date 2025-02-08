@@ -60,7 +60,7 @@ class DeviceEntity(Entity):
         self._attributes = {}
         self._available = True
         # Entity Fields END
-        self.log = logging.getLogger("{}.device.{}".format(__name__, self._unique_id))
+        self.log = logging.getLogger("{}.{}".format(__name__, self._unique_id))
         self.log.info(f"Setting up device {self._unique_id}")
         self._type = args.get('type', 'panel')
 
@@ -225,11 +225,13 @@ class MqttButton(Mapping, Entity):
         super(MqttButton, self).__init__(name, config, device)
         # Entity Fields START
         self.hass = hass
-        self._unique_id = f"{self.device._unique_id}_{self.name.lower().replace(' ', '_').replace('-', '_')}"
+        self._name = name
+
+        self._unique_id = f"{self.device._unique_id}_{self._name.lower().replace(' ', '_').replace('-', '_')}"
         self.entity_id = f"mqtt_code_mapping.{self._unique_id}"
-        self.friendly_name = self._name
+        self.friendly_name = f"{self.device.friendly_name} - {name}"
         self.may_update = True
-        self._state = 'setting up'
+        self._state = 0
         self._available = True
         self._attributes = {}
         # Entity Fields END
@@ -237,6 +239,7 @@ class MqttButton(Mapping, Entity):
         self.last_payload = None
         self.last_triggered = 'never'
         self.last_action = 'none'
+        self.trigger_count = 0
         self.field = None
         self.payloads_on = []
         self.payloads_off = []
@@ -255,10 +258,11 @@ class MqttButton(Mapping, Entity):
     #             title_template,
     #             data,
     #         )
-        self._name = name
         self.log = logging.getLogger(__name__ + '.' + self.name)
-        self.log.debug(f"Init Config for Mapping {name}: "  +str(config))
-        self.log.debug("Payloads: "  +str(self.payloads_on))
+        self.log.info(f"Setting up mapping {self._unique_id}, {self.friendly_name}, {self.name}")
+
+        # self.log.debug(f"Init Config for Mapping {name}: "  +str(config))
+        # self.log.debug("Payloads: "  +str(self.payloads_on))
         if 'field' in config:
             self.field = config.get('field', None)
         if 'payload' in config:
@@ -331,7 +335,7 @@ class MqttButton(Mapping, Entity):
 
     def message_received(self, message):
         """Handle new MQTT messages."""
-        print("Processing message:", message.payload)
+
         # self.log.debug("Message received: " + str(message))
 
         self.process(message.payload)
@@ -339,7 +343,7 @@ class MqttButton(Mapping, Entity):
 
 
     def update_state(self, payload, action):
-        self.log.debug(f"name={self.name}, payload={payload},action={action} ")
+        # self.log.debug(f"name={self.name}, payload={payload},action={action}")
 
         self.last_action = action
         self.last_triggered = dt.now()
@@ -378,9 +382,11 @@ class MqttButton(Mapping, Entity):
         # self.log.debug("globalEvent: " + str(self.globalEvent))
         self.last_action = action
         self.last_triggered = dt.now()
+        self.log_execution()
+
         schedules = self.device.get_active_schedules()
         self.run_actions(schedules)
-        
+
         if self.event or self.globalEvent:
             self.log.debug("Sending event.")
             self.device.hass.bus.fire(self.name, {
@@ -399,6 +405,18 @@ class MqttButton(Mapping, Entity):
     @property
     def should_poll(self):
         return False
+
+    @property
+    def device_class(self) -> str:
+        """Define the device class for a numeric entity."""
+        return "measurement"
+    
+    @property
+    def unit_of_measurement(self) -> str:
+        """Return the unit for the counter."""
+        return "count"
+    def log_execution(self):
+        self.trigger_count += 1
 
     def update_attributes(self):
 
@@ -424,6 +442,7 @@ class MqttButton(Mapping, Entity):
             new_attr['globalEvent'] = True
 
         self._attributes = new_attr
+        self._state = self.trigger_count
 
     @property
     def extra_state_attributes(self):
@@ -439,8 +458,9 @@ class MqttButton(Mapping, Entity):
         return self._unique_id
 
     @property
-    def state(self):
-        return self._state
+    def state(self) -> str:
+        return str(self._state)
+
 
     @property
     def available(self):
@@ -451,7 +471,6 @@ class MqttButton(Mapping, Entity):
     async def async_update(self):
         """Simulate an update."""
         self.log.debug(f"Updating entity: {self._name}")
-        self._state = "online"
         self.update_attributes()
         self.async_write_ha_state()
 
@@ -460,5 +479,5 @@ class MqttButton(Mapping, Entity):
         self.log.debug(f"async_added_to_hass for {self._name}")
 
         self.may_update = True
-        self._state = "ready"
+        self._state = 0
         self.schedule_update_ha_state()
