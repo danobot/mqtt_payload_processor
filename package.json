@@ -1,5 +1,5 @@
 {
-  "name": "mqtt-mqtt-payload_processor",
+  "name": "mqtt-payload-processor",
   "version": "3.1.0",
   "description": "Custom Home Assistant component that converts MQTT message payloads to events and callback functions for consumption in automations. Can be used to assign schedule-based actions to remote controls or button wall panels.",
   "main": "index.js",
