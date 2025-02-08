@@ -8,6 +8,7 @@ from homeassistant.helpers.entity import Entity
 import homeassistant.util.uuid as uuid_util
 from custom_components.processor.yaml_scheduler import TimeSchedule, Mapping
 from homeassistant.components import mqtt
+VERSION='3.0.1'
 
 _LOGGER = logging.getLogger(__name__)
 
