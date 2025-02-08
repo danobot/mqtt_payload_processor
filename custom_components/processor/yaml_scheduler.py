@@ -7,7 +7,7 @@ from homeassistant.core import Context
 from . import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.util import dt
-VERSION = '3.1.1'
+VERSION = '3.1.2'
 
 class Scheduler:
 

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.2](https://github.com/danobot/mqtt_payload_processor/compare/v3.1.1...v3.1.2) (2025-02-08)
+
+
+### Bug Fixes
+
+* package ([393568e](https://github.com/danobot/mqtt_payload_processor/commit/393568eb1ce0e918f500ef91380e8e39e08c7935))
+
+
+
+# Change Log
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
 ## [3.1.1](https://github.com/danobot/mqtt_payload_processor/compare/v3.1.0...v3.1.1) (2025-02-08)
 
 
