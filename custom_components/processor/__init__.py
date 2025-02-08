@@ -7,7 +7,7 @@ from homeassistant.helpers.entity import Entity
 from importlib import import_module
 
 _LOGGER = logging.getLogger(__name__)
-VERSION = '3.0.1'
+VERSION = '3.1.1'
 
 DEPENDENCIES = ['mqtt']
 DOMAIN = "processor"
