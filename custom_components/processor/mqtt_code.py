@@ -1,6 +1,5 @@
 import logging
 import json
-import hashlib
 from datetime import datetime
 from homeassistant.util import dt
 from custom_components.processor import ProcessorDevice
@@ -67,7 +66,7 @@ class DeviceEntity(Entity):
 
         self._mapping_callbacks = []
         self._mappings = []
-        for key, item in args.get('mappings').items(): # for each mapping
+        for key, item in (args.get('mappings') or {}).items(): # for each mapping
             item['globalLogbook'] = args.get('log', False)
             item['globalCallbackScript'] = args.get('globalCallbackScript', None)
             item['globalEvent'] = args.get('globalEvent')
@@ -81,7 +80,7 @@ class DeviceEntity(Entity):
 
         self._schedules = {}
         try:
-            for key, item in args.get('schedules').items():
+            for key, item in (args.get('schedules') or {}).items():
                 self._schedules[key] = TimeSchedule(key, item, self)
                 # self._schedules[key] = ScheduleFactory.create(self, key, item, self)
         except AttributeError as a:
@@ -298,6 +297,11 @@ class MqttButton(Mapping, Entity):
 
 
     def process(self, payload):
+        # z2m sometimes delivers an empty string or null index; payload[0] would raise IndexError and kill the mapping.
+        if not isinstance(payload, str) or not payload.strip():
+            self.log.debug("Ignoring empty or non-string payload: %r", payload)
+            return
+
         value = payload
         if payload[0] in ["{", "["]:
             j = json.loads(payload)
@@ -313,11 +317,7 @@ class MqttButton(Mapping, Entity):
 
         else:
             value = str(value)
-        # self.log.debug("Comparisng extracted value from payload (%s)" % (str(value)))
-        # single payload defined
-        # for k in j.keys():
-            # self.log.debug("%s %s" % (k, j[k]))
-        # self.log.debug("Is %s a match for %s?" % (value, self.name))
+
         for p in self.payloads_on:
             if  str(p) == value:
                 self.last_payload = p
@@ -336,10 +336,13 @@ class MqttButton(Mapping, Entity):
 
     def message_received(self, message):
         """Handle new MQTT messages."""
+        # ensure we work with text even if the payload arrives as bytes
+        if isinstance(message.payload, bytes):
+            payload = message.payload.decode("utf-8")
+        else:
+            payload = message.payload
 
-        # self.log.debug("Message received: " + str(message))
-
-        self.process(message.payload)
+        self.process(payload)
 
 
 
@@ -350,19 +353,11 @@ class MqttButton(Mapping, Entity):
         self.last_triggered = dt.now()
         self.device.update(**{self.name:self.last_triggered})
 
-        name_hash = hashlib.sha1(self.device.entity_id.encode("UTF-8")).hexdigest()[:6]
-        unique_id = uuid_util.random_uuid_hex()
-        context_id = f"{DOMAIN_SHORT}_{name_hash}_{unique_id}"
-        # Restrict id length to database field size
-        context_id = context_id[:CONTEXT_ID_CHARACTER_LIMIT]
-
-        # self.entity_id = f"{DOMAIN}.{self._unique_id}"
         if self.log_events:
             log_data= {
                 'name':  str(self.name) ,
                 'message': " was triggered by RF code " +  str(payload),
-                'entity_id': context_id,
-                'domain': 'processor'
+                'entity_id': self.device.entity_id,
             }
             # if self.type == 'button':
             #     log_data['message'] = 'was pressed'
@@ -411,7 +406,7 @@ class MqttButton(Mapping, Entity):
     def device_class(self) -> str:
         """Define the device class for a numeric entity."""
         return "measurement"
-    
+
     @property
     def unit_of_measurement(self) -> str:
         """Return the unit for the counter."""
