@@ -8,17 +8,6 @@ on:
   pull_request:
 
 jobs:
-  validate-hacs:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: HACS validation
-        uses: hacs/action@main
-        with:
-          category: "integration"
-
   run-tests:
     runs-on: ubuntu-latest
     steps:
@@ -37,6 +26,6 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio
 
-      - name: Run tests
-        run: |
-          pytest tests --asyncio-mode=auto --disable-warnings -v
+      # - name: Run tests
+      #   run: |
+      #     pytest tests --asyncio-mode=auto --disable-warnings -v

@@ -5,6 +5,7 @@ from attr import has
 import homeassistant.helpers.script as script
 from homeassistant.core import Context
 from . import DOMAIN
+DEFAULT_ACTION = 'default'
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.util import dt
 VERSION = '3.1.2'
@@ -178,12 +179,13 @@ class Mapping:
       self.log = logging.getLogger("{}.mappings.{}".format(device.log.name, name))
       self.log.info("Mapping init method called")
       self._schedule_actions = {}
-      try:
-        for key, item in config.get('actions').items():
-          action = Action(self, key, item)
-          self._schedule_actions[key] = action
-      except AttributeError as a:
-        self.log.debug(f"No schedule actions defined. {a}")
+      # actions may be a dict {name: [steps]} (normal) or a bare list of steps (e.g. a mapping with no 'default' key).
+      actions_cfg = config.get('actions')
+      if isinstance(actions_cfg, list):
+        actions_cfg = {DEFAULT_ACTION: actions_cfg}
+      for key, item in (actions_cfg or {}).items():
+        action = Action(self, key, item)
+        self._schedule_actions[key] = action
 
     def run_actions(self, schedule_names):
         self.log.debug(f"Executing Action: {schedule_names}")
