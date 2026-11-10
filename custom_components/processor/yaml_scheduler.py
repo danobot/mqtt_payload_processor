@@ -8,7 +8,7 @@ from . import DOMAIN
 DEFAULT_ACTION = 'default'
 _LOGGER = logging.getLogger(__name__)
 from homeassistant.util import dt
-VERSION = '3.1.2'
+VERSION = '3.1.3'
 
 class Scheduler:
 
